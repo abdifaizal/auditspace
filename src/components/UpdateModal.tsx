@@ -10,6 +10,7 @@ import {
   GitBranch,
   Loader2,
   RefreshCw,
+  Key,
 } from 'lucide-react'
 
 interface UpdateModalProps {
@@ -30,14 +31,27 @@ interface DownloadProgress {
   total: number
 }
 
+const GITHUB_OWNER = 'abdifaizal'
+const GITHUB_REPO = 'auditspace'
+const GITHUB_TOKEN_STORAGE_KEY = 'auditspace_github_token_v1'
+
 export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
   const currentVersion = '1.0.0'
-  const [status, setStatus] = useState<'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'>('idle')
+  const [status, setStatus] = useState<
+    'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'
+  >('idle')
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [progress, setProgress] = useState<DownloadProgress | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isNoReleasesYet, setIsNoReleasesYet] = useState(false)
+
+  // GitHub token for private repo
+  const [githubToken, setGithubToken] = useState<string>(() => {
+    return localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || ''
+  })
+  const [showTokenInput, setShowTokenInput] = useState(false)
 
   const isElectron = Boolean((window as any).electronAPI?.isElectron)
 
@@ -49,10 +63,12 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
     api.onUpdateAvailable((info: UpdateInfo) => {
       setUpdateInfo(info)
       setStatus('available')
+      setIsNoReleasesYet(false)
     })
 
     api.onUpdateNotAvailable(() => {
       setStatus('not-available')
+      setIsNoReleasesYet(false)
     })
 
     api.onDownloadProgress((prog: DownloadProgress) => {
@@ -66,21 +82,35 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
     })
 
     api.onUpdateError((err: string) => {
-      setErrorMessage(err)
-      setStatus('error')
+      const errStr = (err || '').toString()
+      // If 404, it means repository exists but no releases have been published yet!
+      if (errStr.includes('404') || errStr.toLowerCase().includes('cannot find') || errStr.toLowerCase().includes('no published versions')) {
+        setIsNoReleasesYet(true)
+        setStatus('not-available')
+      } else {
+        setErrorMessage(errStr)
+        setStatus('error')
+      }
     })
   }, [isElectron])
+
+  const handleSaveToken = (val: string) => {
+    setGithubToken(val)
+    localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, val.trim())
+  }
 
   const handleCheckUpdates = () => {
     setStatus('checking')
     setErrorMessage(null)
+    setIsNoReleasesYet(false)
+
     if (isElectron) {
-      ;(window as any).electronAPI.checkForUpdates()
+      ;(window as any).electronAPI.checkForUpdates(githubToken.trim() || undefined)
     } else {
       // Mock for browser view
       setTimeout(() => {
         setStatus('not-available')
-      }, 1500)
+      }, 1200)
     }
   }
 
@@ -111,7 +141,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
                 Pembaruan Aplikasi (Auto-Updater)
               </h3>
               <p className="text-xs text-zinc-500">
-                Terhubung dengan GitHub Releases untuk pembaruan fitur rekan tim.
+                Terhubung ke GitHub: <strong>{GITHUB_OWNER}/{GITHUB_REPO}</strong>
               </p>
             </div>
           </div>
@@ -124,7 +154,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5 text-xs text-zinc-700 dark:text-zinc-300">
+        <div className="p-6 space-y-4 text-xs text-zinc-700 dark:text-zinc-300">
           {/* Current Version Box */}
           <div className="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800">
             <div>
@@ -154,19 +184,26 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
             </button>
           </div>
 
-          {/* Status Responses */}
+          {/* Status: Up to date */}
           {status === 'not-available' && (
-            <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-center gap-2.5 text-emerald-800 dark:text-emerald-300">
-              <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
+            <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-start gap-2.5 text-emerald-800 dark:text-emerald-300">
+              <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 mt-0.5" />
               <div>
-                <p className="font-semibold text-xs">Aplikasi Anda Sudah Versi Terbaru!</p>
-                <p className="text-[11px] opacity-80">
-                  Tidak ditemukan pembaruan baru di GitHub Releases saat ini.
+                <p className="font-semibold text-xs">
+                  {isNoReleasesYet
+                    ? 'Repository Terhubung (Belum Ada Rilis Baru)'
+                    : 'Aplikasi Anda Sudah Versi Terbaru!'}
+                </p>
+                <p className="text-[11px] opacity-80 mt-0.5 leading-relaxed">
+                  {isNoReleasesYet
+                    ? `Repository '${GITHUB_OWNER}/${GITHUB_REPO}' berhasil dihubungi. Versi v${currentVersion} yang Anda gunakan adalah versi aktif.`
+                    : `Tidak ada pembaruan versi baru di GitHub Releases saat ini. Versi ${currentVersion} sudah mutakhir.`}
                 </p>
               </div>
             </div>
           )}
 
+          {/* Status: Update Available */}
           {status === 'available' && updateInfo && (
             <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 space-y-3">
               <div className="flex items-center justify-between">
@@ -198,6 +235,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
             </div>
           )}
 
+          {/* Status: Downloading */}
           {status === 'downloading' && (
             <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 space-y-2">
               <div className="flex items-center justify-between text-xs font-semibold text-blue-800 dark:text-blue-300">
@@ -221,14 +259,15 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
             </div>
           )}
 
+          {/* Status: Downloaded */}
           {status === 'downloaded' && (
             <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/20 space-y-3">
               <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
                 <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
                 <div>
-                  <p className="font-semibold text-xs">Pembaruan Telah Berhasil Diunduh!</p>
+                  <p className="font-semibold text-xs">Pembaruan Berhasil Diunduh!</p>
                   <p className="text-[11px] opacity-80">
-                    Klik tombol di bawah untuk memasang dan menjalankan versi baru seketika. Data audit Anda tetap aman.
+                    Klik tombol di bawah untuk memasang dan menjalankan versi baru seketika. Seluruh data audit Anda tetap aman.
                   </p>
                 </div>
               </div>
@@ -242,28 +281,60 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
             </div>
           )}
 
+          {/* Status: Error */}
           {status === 'error' && (
             <div className="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/20 flex items-start gap-2.5 text-amber-800 dark:text-amber-300">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-xs">Informasi Server Rilis</p>
-                <p className="text-[11px] opacity-90 mt-0.5">
-                  {errorMessage || 'Repository rilis GitHub belum dipublikasikan atau belum terhubung.'}
+                <p className="font-semibold text-xs">Koneksi Server Rilis</p>
+                <p className="text-[11px] opacity-90 mt-0.5 leading-relaxed">
+                  {errorMessage || 'Tidak dapat terhubung ke GitHub Releases. Pastikan koneksi internet aktif.'}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Setup Guide for User & Colleagues */}
-          <div className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/20 space-y-2 text-[11px] text-zinc-500">
-            <p className="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
-              <GitBranch className="w-3.5 h-3.5" /> Cara Kerja Auto-Update untuk Rekan Kerja:
-            </p>
-            <ol className="list-decimal pl-4 space-y-1">
-              <li>Anda mengunggah perubahan ke GitHub repository.</li>
-              <li>Sistem CI/CD GitHub otomatis membuat versi baru (misal <code>v1.1.0</code>).</li>
-              <li>Aplikasi di laptop rekan Anda otomatis mendeteksi dan memperbarui dirinya sendiri tanpa perlu mengirim file lagi!</li>
-            </ol>
+          {/* Private Repository Token Option (Collapsible) */}
+          <div className="pt-1">
+            <button
+              onClick={() => setShowTokenInput(!showTokenInput)}
+              className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1"
+            >
+              <Key className="w-3 h-3 text-amber-500" />
+              <span>Opsi Tambahan: Token Repository Private (Opsional)</span>
+            </button>
+
+            {showTokenInput && (
+              <div className="mt-2 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700 space-y-2 animate-in fade-in">
+                <label className="block text-[10px] uppercase font-bold text-zinc-500">
+                  GitHub Personal Access Token (Hanya jika repository di-set Private):
+                </label>
+                <input
+                  type="password"
+                  value={githubToken}
+                  onChange={(e) => handleSaveToken(e.target.value)}
+                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100"
+                />
+                <p className="text-[10px] text-zinc-400">
+                  Jika repository Anda <strong>Public</strong>, biarkan kolom ini kosong.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Link to GitHub Releases Page */}
+          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px]">
+            <span className="text-zinc-400">Lihat rilis di browser:</span>
+            <a
+              href={`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold"
+            >
+              <span>github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
 

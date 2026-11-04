@@ -38,6 +38,7 @@ import { ReportModal } from './components/ReportModal'
 import { ArtifactsVaultModal } from './components/ArtifactsVaultModal'
 import { CloudSyncModal } from './components/CloudSyncModal'
 import { UpdateModal } from './components/UpdateModal'
+import { ResetConfirmModal } from './components/ResetConfirmModal'
 
 export function App() {
   const [multiStore, setMultiStore] = useState<MultiSpaceStore>(() => loadMultiSpaceStore())
@@ -67,6 +68,7 @@ export function App() {
   const [isArtifactsVaultOpen, setIsArtifactsVaultOpen] = useState(false)
   const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false)
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false)
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
 
@@ -337,24 +339,15 @@ export function App() {
     }
   }
 
-  const handleResetSample = () => {
-    const isTotalReset = confirm(
-      'PILIHAN RESET APLIKASI:\n\n' +
-      '• Klik [OK] untuk RESET TOTAL DARI 0 (Menghapus seluruh space & kembali ke kondisi baru).\n' +
-      '• Klik [Cancel] jika hanya ingin mengosongkan kartu pada space aktif ini saja.'
-    )
+  const handleResetCurrentSpace = () => {
+    const sample = getSampleWorkspace()
+    updateActiveSpace(() => sample)
+  }
 
-    if (isTotalReset) {
-      factoryResetStorage()
-      const fresh = loadMultiSpaceStore()
-      setMultiStore(fresh)
-      alert('Aplikasi telah berhasil di-reset total dari 0 (Factory Reset)!')
-    } else {
-      if (confirm('Kosongkan semua kartu pada space aktif ini?')) {
-        const sample = getSampleWorkspace()
-        updateActiveSpace(() => sample)
-      }
-    }
+  const handleFactoryResetAll = () => {
+    factoryResetStorage()
+    const fresh = loadMultiSpaceStore()
+    setMultiStore(fresh)
   }
 
   return (
@@ -371,12 +364,12 @@ export function App() {
         onViewModeChange={setViewMode}
         onExport={handleExport}
         onImport={handleImport}
-        onResetSample={handleResetSample}
         onAddNew={handleAddNew}
         onOpenReport={() => setIsReportOpen(true)}
         onOpenArtifactsVault={() => setIsArtifactsVaultOpen(true)}
         onOpenCloudSync={() => setIsCloudSyncOpen(true)}
         onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
+        onOpenResetConfirm={() => setIsResetModalOpen(true)}
         lastSavedTime={lastSavedTime}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
@@ -510,6 +503,14 @@ export function App() {
       <UpdateModal
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
+      />
+
+      <ResetConfirmModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        currentSpaceName={activeSpace.projectMeta.name}
+        onResetCurrentSpace={handleResetCurrentSpace}
+        onFactoryResetAll={handleFactoryResetAll}
       />
 
       <PdfViewerModal

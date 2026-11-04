@@ -37,12 +37,12 @@ interface HeaderProps {
   onViewModeChange: (mode: 'canvas' | 'kanban') => void
   onExport: () => void
   onImport: (file: File) => void
-  onResetSample: () => void
   onAddNew: (type: 'meeting' | 'material' | 'task' | 'sticky') => void
   onOpenReport: () => void
   onOpenArtifactsVault: () => void
   onOpenCloudSync: () => void
   onOpenUpdateModal: () => void
+  onOpenResetConfirm: () => void
   lastSavedTime: string
   darkMode: boolean
   onToggleDarkMode: () => void
@@ -59,12 +59,12 @@ export const Header: React.FC<HeaderProps> = ({
   onViewModeChange,
   onExport,
   onImport,
-  onResetSample,
   onAddNew,
   onOpenReport,
   onOpenArtifactsVault,
   onOpenCloudSync,
   onOpenUpdateModal,
+  onOpenResetConfirm,
   lastSavedTime,
   darkMode,
   onToggleDarkMode,
@@ -326,7 +326,7 @@ export const Header: React.FC<HeaderProps> = ({
                   setShowToolsMenu(false)
                   onOpenCloudSync()
                 }}
-                className="w-full px-3.5 py-2.5 text-left text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-3 transition border-t border-zinc-100 dark:border-zinc-800 mt-1"
+                className="w-full px-3.5 py-2.5 text-left text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-3 transition"
               >
                 <div className="p-1.5 rounded-lg bg-sky-100 dark:bg-sky-950/60 text-sky-600 shrink-0">
                   <Cloud className="w-4 h-4" />
@@ -334,6 +334,22 @@ export const Header: React.FC<HeaderProps> = ({
                 <div>
                   <p className="font-semibold text-zinc-900 dark:text-zinc-100">Pencadangan Cloud Sync</p>
                   <p className="text-[10px] text-zinc-500">Backup Google Drive & OneDrive</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowToolsMenu(false)
+                  onOpenResetConfirm()
+                }}
+                className="w-full px-3.5 py-2.5 text-left text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-3 transition border-t border-zinc-100 dark:border-zinc-800 mt-1"
+              >
+                <div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-950/60 text-red-600 shrink-0">
+                  <Trash2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="font-semibold text-red-600 dark:text-red-400">Reset & Pembersihan Data...</p>
+                  <p className="text-[10px] text-zinc-500">Kosongkan space atau reset total</p>
                 </div>
               </button>
             </div>
@@ -450,15 +466,6 @@ export const Header: React.FC<HeaderProps> = ({
           title="Cek Pembaruan Versi (Auto-Update)"
         >
           <Sparkles className="w-4 h-4 text-blue-500" />
-        </button>
-
-        {/* Reset */}
-        <button
-          onClick={onResetSample}
-          className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition"
-          title="Reset Aplikasi (Reset Space ini atau Reset Total dari 0)"
-        >
-          <RotateCcw className="w-4 h-4" />
         </button>
 
         {/* Dark Mode */}
