@@ -39,7 +39,7 @@ const GITHUB_TOKEN_STORAGE_KEY = 'auditspace_github_token_v1'
 export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
-  const currentVersion = '1.0.0'
+  const currentVersion = '1.1.0'
   const [status, setStatus] = useState<
     'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'
   >('idle')

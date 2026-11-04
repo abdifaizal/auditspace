@@ -43,14 +43,24 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'AuditSpace ${{ github.ref_name }}'
           releaseBody: |
-            ## AuditSpace ${{ github.ref_name }} (Rust / Tauri 2.0)
+            ## AuditSpace ${{ github.ref_name }} (Rust / Tauri 2.0 Engine)
 
-            🎉 Rilis resmi **AuditSpace** dengan mesin berbasis **Rust (Tauri 2.0)**.
+            🎉 Rilis resmi pembaruan fitur **AuditSpace ${{ github.ref_name }}**:
 
-            ### Keunggulan Versi Rust:
-            - **Super Ringan & Cepat**: Ukuran file sangat ringkas (~10-15MB) dengan konsumsi RAM yang jauh lebih hemat dibanding wrapper biasa.
-            - **Performa Tinggi**: Native Windows WebView2 rendering yang sangat responsif.
-            - **Fitur Lengkap**: Infinite Canvas, Modular Kanban, Vault Berkas & Dokumen Bukti, Laporan Status Cetak A4 Unclipped, Multi-Space Workspace.
-            - **100% Data Aman & Privat**: Seluruh data audit tersimpan secara lokal di perangkat Anda.
+            ### ✨ Apa yang Baru di Versi Ini:
+            1. **Diferensiasi Kolom To-Do vs In-Progress**:
+               - Kolom To-Do dan In-Progress kini dipisah dengan status badge jelas.
+               - Tombol aksi cepat **`▶ Mulai Kerjakan`** memindahkan tugas secara instan.
+               - Tugas In-Progress memiliki badge berdenyut aktif **`● Sedang Berjalan`** dan border aktif.
+            2. **Bebas Kustomisasi & Tambah Kolom**:
+               - Seluruh judul kolom bawaan dapat diubah namanya (rename).
+               - Tersedia tombol **`+ Tambah Kotak / Kolom Baru`** untuk membuat kolom kustom dengan kartu kustom sendiri.
+            3. **Scrollbar Horizontal Tebal & Eye-Catching**:
+               - Scrollbar 12px dengan warna gradien modern, ditambah tombol navigasi **`[ ◀ Geser ]`** dan **`[ Geser ▶ ]`**.
+            4. **Kolaborasi Langsung P2P (WebRTC Live Share)**:
+               - Fitur **`[ 📡 Kolaborasi P2P ]`** untuk membagikan ruang kerja langsung antar laptop AuditSpace via kode 6-digit.
+               - Mendukung mode **Peninjau (Read-Only)** dan mode **Editor (Read-Write)**.
+            5. **Ekspor Dasbor Interaktif (.html)**:
+               - Tersedia di menu *Alat & Laporan* untuk mengunduh 1 file HTML eksekutif mandiri yang bisa dibuka di browser apa saja tanpa instalasi (100% Read-Only).
           releaseDraft: false
           prerelease: false
