@@ -8,6 +8,9 @@ import {
   Attachment,
   ProjectMeta,
   MultiSpaceStore,
+  CustomColumn,
+  CustomCard,
+  TaskStatus,
 } from './types'
 import {
   loadMultiSpaceStore,
@@ -283,6 +286,83 @@ export function App() {
     updateActiveSpace((prev) => autoLayoutWorkspace(prev))
   }
 
+  // TASK STATUS TRANSITIONS (To-Do <-> In-Progress)
+  const handleUpdateTaskStatus = (taskId: string, status: TaskStatus) => {
+    updateActiveSpace((prev) => ({
+      ...prev,
+      tasks: prev.tasks.map((t) => {
+        if (t.id !== taskId) return t
+        return {
+          ...t,
+          status,
+          completedAt: status === 'done' ? (t.completedAt || new Date().toISOString()) : undefined,
+          completedBy: status === 'done' ? (t.completedBy || t.pic || 'Auditor') : undefined,
+        }
+      }),
+    }))
+  }
+
+  // COLUMN CUSTOMIZATION & RENAME
+  const handleRenameColumn = (columnKey: string, newTitle: string) => {
+    updateActiveSpace((prev) => ({
+      ...prev,
+      columnTitles: {
+        ...(prev.columnTitles || {}),
+        [columnKey]: newTitle,
+      },
+    }))
+  }
+
+  const handleResetColumnTitle = (columnKey: string) => {
+    updateActiveSpace((prev) => {
+      const copy = { ...(prev.columnTitles || {}) }
+      delete copy[columnKey]
+      return {
+        ...prev,
+        columnTitles: copy,
+      }
+    })
+  }
+
+  const handleSaveCustomColumn = (col: CustomColumn) => {
+    updateActiveSpace((prev) => {
+      const existing = (prev.customColumns || []).some((c) => c.id === col.id)
+      return {
+        ...prev,
+        customColumns: existing
+          ? (prev.customColumns || []).map((c) => (c.id === col.id ? col : c))
+          : [...(prev.customColumns || []), col],
+      }
+    })
+  }
+
+  const handleDeleteCustomColumn = (columnId: string) => {
+    updateActiveSpace((prev) => ({
+      ...prev,
+      customColumns: (prev.customColumns || []).filter((c) => c.id !== columnId),
+      customCards: (prev.customCards || []).filter((c) => c.columnId !== columnId),
+    }))
+  }
+
+  const handleSaveCustomCard = (card: CustomCard) => {
+    updateActiveSpace((prev) => {
+      const existing = (prev.customCards || []).some((c) => c.id === card.id)
+      return {
+        ...prev,
+        customCards: existing
+          ? (prev.customCards || []).map((c) => (c.id === card.id ? card : c))
+          : [...(prev.customCards || []), card],
+      }
+    })
+  }
+
+  const handleDeleteCustomCard = (cardId: string) => {
+    updateActiveSpace((prev) => ({
+      ...prev,
+      customCards: (prev.customCards || []).filter((c) => c.id !== cardId),
+    }))
+  }
+
   // ADD NEW ITEM DISPATCHER
   const handleAddNew = (type: 'meeting' | 'material' | 'task' | 'sticky') => {
     if (type === 'meeting') {
@@ -413,6 +493,9 @@ export function App() {
             materials={activeSpace.materials}
             tasks={activeSpace.tasks}
             stickies={activeSpace.stickies}
+            columnTitles={activeSpace.columnTitles || {}}
+            customColumns={activeSpace.customColumns || []}
+            customCards={activeSpace.customCards || []}
             onAddNew={handleAddNew}
             onEditMeeting={(m) => {
               setEditingMeeting(m)
@@ -433,6 +516,13 @@ export function App() {
             onDeleteSticky={handleDeleteSticky}
             onPreviewPdf={(att) => setPreviewAttachment(att)}
             onToggleTaskDone={handleToggleTaskDone}
+            onUpdateTaskStatus={handleUpdateTaskStatus}
+            onRenameColumn={handleRenameColumn}
+            onResetColumnTitle={handleResetColumnTitle}
+            onSaveCustomColumn={handleSaveCustomColumn}
+            onDeleteCustomColumn={handleDeleteCustomColumn}
+            onSaveCustomCard={handleSaveCustomCard}
+            onDeleteCustomCard={handleDeleteCustomCard}
           />
         )}
       </main>

@@ -80,10 +80,34 @@ export interface ProjectMeta {
   description: string
 }
 
+export interface CustomColumn {
+  id: string
+  title: string
+  description?: string
+  color?: 'amber' | 'blue' | 'emerald' | 'purple' | 'rose' | 'cyan' | 'zinc'
+}
+
+export interface CustomCard {
+  id: string
+  columnId: string
+  title: string
+  description: string
+  pic?: string
+  date?: string
+  priority?: TaskPriority
+  attachments?: Attachment[]
+  links?: ExternalLink[]
+  x?: number
+  y?: number
+}
+
 export interface AuditWorkspace {
   version: string
   lastModified: string
   projectMeta: ProjectMeta
+  columnTitles?: Record<string, string>
+  customColumns?: CustomColumn[]
+  customCards?: CustomCard[]
   meetings: MeetingCard[]
   materials: MaterialVaultCard[]
   tasks: TaskCard[]

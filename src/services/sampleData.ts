@@ -19,5 +19,8 @@ export function getSampleWorkspace(): AuditWorkspace {
     tasks: [],
     stickies: [],
     connections: [],
+    columnTitles: {},
+    customColumns: [],
+    customCards: [],
   }
 }
