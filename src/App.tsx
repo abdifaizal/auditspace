@@ -42,6 +42,9 @@ import { ArtifactsVaultModal } from './components/ArtifactsVaultModal'
 import { CloudSyncModal } from './components/CloudSyncModal'
 import { UpdateModal } from './components/UpdateModal'
 import { ResetConfirmModal } from './components/ResetConfirmModal'
+import { ShareModal } from './components/ShareModal'
+import { exportInteractiveHtmlReport } from './services/htmlReportExporter'
+import { p2pSync, CollabState } from './services/p2pSync'
 
 export function App() {
   const [multiStore, setMultiStore] = useState<MultiSpaceStore>(() => loadMultiSpaceStore())
@@ -72,6 +75,30 @@ export function App() {
   const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false)
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [collabState, setCollabState] = useState<CollabState>(p2pSync.getState())
+
+  // P2P Collaboration Sync Listener
+  useEffect(() => {
+    const unsubState = p2pSync.subscribeState(setCollabState)
+    const unsubWs = p2pSync.subscribeWorkspace((syncedWs) => {
+      setMultiStore((prev) => {
+        const exists = prev.spaces.some((s) => s.projectMeta.id === syncedWs.projectMeta.id)
+        return {
+          ...prev,
+          activeSpaceId: syncedWs.projectMeta.id,
+          spaces: exists
+            ? prev.spaces.map((s) => (s.projectMeta.id === syncedWs.projectMeta.id ? syncedWs : s))
+            : [...prev.spaces, syncedWs],
+        }
+      })
+    })
+
+    return () => {
+      unsubState()
+      unsubWs()
+    }
+  }, [])
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
 
@@ -100,12 +127,21 @@ export function App() {
 
   // Helper to update active space
   const updateActiveSpace = (updater: (prev: AuditWorkspace) => AuditWorkspace) => {
-    setMultiStore((prev) => ({
-      ...prev,
-      spaces: prev.spaces.map((s) =>
-        s.projectMeta.id === prev.activeSpaceId ? updater(s) : s
-      ),
-    }))
+    setMultiStore((prev) => {
+      const updatedSpaces = prev.spaces.map((s) => {
+        if (s.projectMeta.id === prev.activeSpaceId) {
+          const updated = updater(s)
+          // Broadcast to connected P2P peers if in read-write session
+          p2pSync.broadcastWorkspace(updated)
+          return updated
+        }
+        return s
+      })
+      return {
+        ...prev,
+        spaces: updatedSpaces,
+      }
+    })
   }
 
   // SPACE MANAGEMENT
@@ -450,10 +486,34 @@ export function App() {
         onOpenCloudSync={() => setIsCloudSyncOpen(true)}
         onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
         onOpenResetConfirm={() => setIsResetModalOpen(true)}
+        onOpenShareModal={() => setIsShareModalOpen(true)}
+        onExportHtmlReport={() => exportInteractiveHtmlReport(activeSpace)}
+        isCollaborating={collabState.isConnected}
+        collabRoomId={collabState.roomId}
         lastSavedTime={lastSavedTime}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
       />
+
+      {/* Read-Only Collaboration Banner */}
+      {collabState.isConnected && collabState.accessMode === 'read-only' && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 px-6 py-2 flex items-center justify-between text-xs text-amber-800 dark:text-amber-300">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 font-bold text-[10px] uppercase tracking-wider">
+              🔒 Mode Peninjau (Read-Only)
+            </span>
+            <span>
+              Anda terhubung ke ruang kolaborasi <strong>{collabState.roomId}</strong>. Perubahan dinonaktifkan untuk peninjau.
+            </span>
+          </div>
+          <button
+            onClick={() => p2pSync.disconnect()}
+            className="text-[11px] underline font-semibold hover:text-amber-950 dark:hover:text-amber-100"
+          >
+            Putuskan Sesi
+          </button>
+        </div>
+      )}
 
       {/* Main Workspace: Dual-View Switcher */}
       <main className="flex-1 relative overflow-hidden">
@@ -593,6 +653,13 @@ export function App() {
       <UpdateModal
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
+      />
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        workspace={activeSpace}
+        onExportHtmlReport={() => exportInteractiveHtmlReport(activeSpace)}
       />
 
       <ResetConfirmModal

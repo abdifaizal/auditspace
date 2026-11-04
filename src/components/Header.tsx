@@ -24,6 +24,8 @@ import {
   Printer,
   Cloud,
   Briefcase,
+  Radio,
+  FileCode,
 } from 'lucide-react'
 
 interface HeaderProps {
@@ -43,6 +45,10 @@ interface HeaderProps {
   onOpenCloudSync: () => void
   onOpenUpdateModal: () => void
   onOpenResetConfirm: () => void
+  onOpenShareModal: () => void
+  onExportHtmlReport: () => void
+  isCollaborating?: boolean
+  collabRoomId?: string | null
   lastSavedTime: string
   darkMode: boolean
   onToggleDarkMode: () => void
@@ -65,6 +71,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCloudSync,
   onOpenUpdateModal,
   onOpenResetConfirm,
+  onOpenShareModal,
+  onExportHtmlReport,
+  isCollaborating = false,
+  collabRoomId = null,
   lastSavedTime,
   darkMode,
   onToggleDarkMode,
@@ -269,6 +279,20 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Actions */}
       <div className="flex items-center gap-2">
+        {/* P2P LIVE COLLABORATION BUTTON */}
+        <button
+          onClick={onOpenShareModal}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition border ${
+            isCollaborating
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-sm'
+              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 border-zinc-200/80 dark:border-zinc-700'
+          }`}
+          title="Kolaborasi Langsung P2P (Bagi Ruang atau Gabung Ruang Rekan)"
+        >
+          <Radio className={`w-3.5 h-3.5 ${isCollaborating ? 'text-emerald-500 animate-pulse' : 'text-blue-500'}`} />
+          <span className="hidden md:inline">{isCollaborating ? `Live (${collabRoomId})` : 'Kolaborasi P2P'}</span>
+        </button>
+
         {/* DROPDOWN MENU ALAT & LAPORAN AUDIT (Menggabungkan Laporan PDF, Vault Berkas, dan Cloud Sync) */}
         <div className="relative">
           <button
@@ -334,6 +358,22 @@ export const Header: React.FC<HeaderProps> = ({
                 <div>
                   <p className="font-semibold text-zinc-900 dark:text-zinc-100">Pencadangan Cloud Sync</p>
                   <p className="text-[10px] text-zinc-500">Backup Google Drive & OneDrive</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowToolsMenu(false)
+                  onExportHtmlReport()
+                }}
+                className="w-full px-3.5 py-2.5 text-left text-xs text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-3 transition"
+              >
+                <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 shrink-0">
+                  <FileCode className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="font-semibold text-zinc-900 dark:text-zinc-100">Ekspor Dasbor Interaktif (.html)</p>
+                  <p className="text-[10px] text-zinc-500">1 file HTML eksekutif mandiri (Read-Only)</p>
                 </div>
               </button>
 
