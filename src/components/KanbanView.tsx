@@ -11,6 +11,7 @@ import {
 } from '../types'
 import {
   FileText,
+  FileSpreadsheet,
   Calendar,
   Clock,
   Globe,
@@ -400,21 +401,60 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                     <span>{m.time}</span>
                   </div>
 
-                  {m.pdfInvite && (
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onPreviewPdf(m.pdfInvite!)
-                      }}
-                      className="flex items-center justify-between p-2 rounded-lg bg-red-50/60 dark:bg-red-950/20 border border-red-200/60 text-[11px] text-red-700 dark:text-red-300 hover:bg-red-100/50 transition"
-                    >
-                      <div className="flex items-center gap-1.5 truncate">
-                        <FileText className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{m.pdfInvite.name}</span>
+                  {/* Meeting attachments: PDF Undangan, Daftar Hadir Excel, Transkrip, dll. */}
+                  {(() => {
+                    const atts =
+                      m.attachments && m.attachments.length > 0
+                        ? m.attachments
+                        : m.pdfInvite
+                        ? [m.pdfInvite]
+                        : []
+                    if (atts.length === 0) return null
+                    return (
+                      <div className="space-y-1">
+                        {atts.map((a) => {
+                          const name = a.name.toLowerCase()
+                          const isXls =
+                            name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')
+                          const isTxt = name.endsWith('.txt') || name.endsWith('.log')
+                          return (
+                            <div
+                              key={a.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onPreviewPdf(a)
+                              }}
+                              className={`flex items-center justify-between p-1.5 rounded-lg border text-[11px] cursor-pointer transition ${
+                                isXls
+                                  ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/50'
+                                  : isTxt
+                                  ? 'bg-blue-50/60 dark:bg-blue-950/20 border-blue-200/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100/50'
+                                  : 'bg-red-50/60 dark:bg-red-950/20 border-red-200/60 text-red-700 dark:text-red-300 hover:bg-red-100/50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                {isXls ? (
+                                  <FileSpreadsheet className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                ) : (
+                                  <FileText
+                                    className={`w-3.5 h-3.5 shrink-0 ${
+                                      isTxt
+                                        ? 'text-blue-600 dark:text-blue-400'
+                                        : 'text-red-600 dark:text-red-400'
+                                    }`}
+                                  />
+                                )}
+                                <span className="truncate">{a.name}</span>
+                              </div>
+                              <span className="text-[10px] underline font-medium shrink-0 ml-1">
+                                {isXls ? 'Excel' : isTxt ? 'Teks' : 'PDF'}
+                              </span>
+                            </div>
+                          )
+                        })}
                       </div>
-                      <span className="text-[10px] underline font-medium shrink-0 ml-1">Lihat PDF</span>
-                    </div>
-                  )}
+                    )
+                  })()}
 
                   {m.transcript && (
                     <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed bg-zinc-50 dark:bg-zinc-800/40 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800">

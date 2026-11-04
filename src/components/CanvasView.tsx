@@ -9,6 +9,8 @@ import {
 } from '../types'
 import {
   FileText,
+  FileSpreadsheet,
+  File,
   Calendar,
   Clock,
   Globe,
@@ -342,30 +344,61 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
                 </div>
               </div>
 
-              {/* PDF Invite Pill */}
-              {m.pdfInvite ? (
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200/80 dark:border-red-900/40">
-                  <div className="flex items-center gap-2.5 truncate">
-                    <FileText className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                    <div className="truncate">
-                      <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                        {m.pdfInvite.name}
-                      </p>
-                      <p className="text-[10px] text-zinc-500">
-                        {formatBytes(m.pdfInvite.size)} • Undangan Diskusi
-                      </p>
-                    </div>
+              {/* Meeting Attachments: PDF Undangan, Daftar Hadir Excel, Transkrip, dll. */}
+              {(() => {
+                const atts = m.attachments && m.attachments.length > 0 ? m.attachments : (m.pdfInvite ? [m.pdfInvite] : [])
+                if (atts.length === 0) {
+                  return <div className="text-[11px] text-zinc-400 italic">Belum melampirkan berkas diskusi.</div>
+                }
+                return (
+                  <div className="space-y-1.5">
+                    {atts.map((att) => {
+                      const name = att.name.toLowerCase()
+                      const isXls = name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')
+                      const isTxt = name.endsWith('.txt') || name.endsWith('.log')
+                      return (
+                        <div
+                          key={att.id}
+                          className={`flex items-center justify-between p-2 rounded-xl border ${
+                            isXls
+                              ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/40'
+                              : isTxt
+                              ? 'bg-blue-50/60 dark:bg-blue-950/20 border-blue-200/80 dark:border-blue-900/40'
+                              : 'bg-red-50/60 dark:bg-red-950/20 border-red-200/80 dark:border-red-900/40'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            {isXls ? (
+                              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            ) : (
+                              <FileText
+                                className={`w-3.5 h-3.5 shrink-0 ${
+                                  isTxt ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'
+                                }`}
+                              />
+                            )}
+                            <div className="truncate">
+                              <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                                {att.name}
+                              </p>
+                              <p className="text-[10px] text-zinc-500">
+                                {formatBytes(att.size)} •{' '}
+                                {isXls ? 'Daftar Hadir Excel' : isTxt ? 'Transkrip Teks' : 'Undangan Diskusi'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => onPreviewPdf(att)}
+                            className="px-2 py-0.5 text-[11px] font-semibold rounded-lg bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 border border-zinc-200 dark:border-zinc-700 hover:bg-blue-50 dark:hover:bg-zinc-700 transition shrink-0 ml-1"
+                          >
+                            Buka
+                          </button>
+                        </div>
+                      )
+                    })}
                   </div>
-                  <button
-                    onClick={() => onPreviewPdf(m.pdfInvite!)}
-                    className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 border border-zinc-200 dark:border-zinc-700 hover:bg-blue-50 dark:hover:bg-zinc-700 transition shrink-0"
-                  >
-                    Buka PDF
-                  </button>
-                </div>
-              ) : (
-                <div className="text-[11px] text-zinc-400 italic">Belum melampirkan PDF Undangan.</div>
-              )}
+                )
+              })()}
 
               {/* Transcript Summary */}
               {m.transcript && (

@@ -180,6 +180,9 @@ export async function exportAuditPackage(workspace: AuditWorkspace): Promise<voi
   // Extract from meetings
   for (const m of cleanWorkspace.meetings) {
     if (m.pdfInvite) extractAndReplace(m.pdfInvite)
+    if (m.attachments) {
+      for (const a of m.attachments) extractAndReplace(a)
+    }
   }
   // Extract from materials
   for (const mat of cleanWorkspace.materials) {
@@ -235,6 +238,9 @@ export async function importAuditPackage(file: File): Promise<AuditWorkspace> {
 
     for (const m of workspace.meetings) {
       if (m.pdfInvite) await hydrate(m.pdfInvite)
+      if (m.attachments) {
+        for (const a of m.attachments) await hydrate(a)
+      }
     }
     for (const mat of workspace.materials) {
       for (const a of mat.attachments) await hydrate(a)

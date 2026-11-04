@@ -328,7 +328,14 @@ export function exportInteractiveHtmlReport(workspace: AuditWorkspace): void {
       tbody.innerHTML = data.meetings.map((m, idx) => \`
         <tr>
           <td>\${idx + 1}</td>
-          <td><strong style="color: #fff;">\${m.title}</strong></td>
+          <td>
+            <strong style="color: #fff;">\${m.title}</strong>
+            \${(m.attachments || (m.pdfInvite ? [m.pdfInvite] : [])).length > 0 ? \`
+              <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
+                \${(m.attachments || (m.pdfInvite ? [m.pdfInvite] : [])).map(a => \`<span class="badge badge-zinc" style="font-size: 10px;">📎 \${a.name}</span>\`).join('')}
+              </div>
+            \` : ''}
+          </td>
           <td><span class="badge badge-blue">\${m.auditeeUnit || '-'}</span></td>
           <td>\${m.date} \${m.time}</td>
           <td>

@@ -48,20 +48,21 @@ export const ArtifactsVaultModal: React.FC<ArtifactsVaultModalProps> = ({
   // Collect all uploaded artifacts across the current active space
   const items: VaultItem[] = []
 
-  // 1. From meetings (invites)
+  // 1. From meetings (invites, attendance sheets, transcripts, etc.)
   workspace.meetings.forEach((m) => {
-    if (m.pdfInvite) {
+    const list = m.attachments && m.attachments.length > 0 ? m.attachments : (m.pdfInvite ? [m.pdfInvite] : [])
+    list.forEach((att) => {
       items.push({
-        id: m.pdfInvite.id,
-        name: m.pdfInvite.name,
-        type: m.pdfInvite.type,
-        size: m.pdfInvite.size,
-        uploadedAt: m.pdfInvite.uploadedAt,
+        id: att.id,
+        name: att.name,
+        type: att.type,
+        size: att.size,
+        uploadedAt: att.uploadedAt,
         category: 'invite',
         sourceTitle: m.title,
-        attachment: m.pdfInvite,
+        attachment: att,
       })
-    }
+    })
   })
 
   // 2. From materials

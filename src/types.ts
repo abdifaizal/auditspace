@@ -19,7 +19,8 @@ export interface MeetingCard {
   auditeeUnit: string
   date: string
   time: string
-  pdfInvite: Attachment | null
+  pdfInvite: Attachment | null // Legacy single PDF field maintained for backwards compatibility
+  attachments?: Attachment[] // Multi-document support: Excel daftar hadir, TXT transkrip, surat undangan, notulen, dll.
   transcript: string
   actionPoints: string[]
   x: number
