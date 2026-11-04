@@ -26,6 +26,8 @@ import {
   Briefcase,
   Radio,
   FileCode,
+  FileUp,
+  FileDown,
 } from 'lucide-react'
 
 interface HeaderProps {
@@ -478,7 +480,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
           title="Export Space ini + Berkas PDF ke Bundle .auditpkg"
         >
-          <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          <FileUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
           <span className="hidden sm:inline">Export</span>
         </button>
 
@@ -495,7 +497,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
           title="Buka / Import file .auditpkg yang tersimpan di disk atau cloud drive"
         >
-          <Upload className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <FileDown className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span className="hidden sm:inline">Import</span>
         </button>
 

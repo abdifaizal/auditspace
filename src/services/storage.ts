@@ -203,7 +203,9 @@ export async function exportAuditPackage(workspace: AuditWorkspace): Promise<voi
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  setTimeout(() => {
+    URL.revokeObjectURL(url)
+  }, 2000)
 }
 
 // Import complete workspace from a .auditpkg file
