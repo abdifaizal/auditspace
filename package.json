@@ -1,0 +1,70 @@
+{
+  "name": "auditspace",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Productivity workspace for audit engagements",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "build:exe": "npm run build && electron-builder --win portable",
+    "release": "npm run build && electron-builder --win portable --publish always",
+    "preview": "vite preview"
+  },
+  "build": {
+    "appId": "com.auditspace.app",
+    "productName": "AuditSpace",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "abdifaizal",
+        "repo": "auditspace"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "AuditSpace-Portable.exe"
+    }
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "electron-updater": "^6.8.11",
+    "jszip": "^3.10.2",
+    "lucide-react": "^1.68.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.4",
+    "@types/jszip": "^3.4.0",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "electron": "^45.2.2",
+    "electron-builder": "^26.18.0",
+    "tailwindcss": "^4.3.4",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.5",
+    "wait-on": "^9.5.1"
+  }
+}
