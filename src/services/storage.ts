@@ -49,6 +49,16 @@ export function saveMultiSpaceStore(store: MultiSpaceStore): void {
   }
 }
 
+export function factoryResetStorage(): void {
+  try {
+    localStorage.removeItem(MULTI_STORE_KEY)
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
+    localStorage.clear()
+  } catch (err) {
+    console.error('Failed to factory reset storage:', err)
+  }
+}
+
 export function createNewSpace(
   name: string,
   timeline: string,

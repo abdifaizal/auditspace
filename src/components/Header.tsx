@@ -454,13 +454,9 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Reset */}
         <button
-          onClick={() => {
-            if (confirm('Kosongkan dan atur ulang ruang kerja ini ke kanvas baru?')) {
-              onResetSample()
-            }
-          }}
-          className="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition"
-          title="Reset Kanvas Space Ini"
+          onClick={onResetSample}
+          className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition"
+          title="Reset Aplikasi (Reset Space ini atau Reset Total dari 0)"
         >
           <RotateCcw className="w-4 h-4" />
         </button>

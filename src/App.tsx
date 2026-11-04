@@ -15,6 +15,7 @@ import {
   createNewSpace,
   exportAuditPackage,
   importAuditPackage,
+  factoryResetStorage,
 } from './services/storage'
 import {
   getNextMeetingPosition,
@@ -337,8 +338,23 @@ export function App() {
   }
 
   const handleResetSample = () => {
-    const sample = getSampleWorkspace()
-    updateActiveSpace(() => sample)
+    const isTotalReset = confirm(
+      'PILIHAN RESET APLIKASI:\n\n' +
+      '• Klik [OK] untuk RESET TOTAL DARI 0 (Menghapus seluruh space & kembali ke kondisi baru).\n' +
+      '• Klik [Cancel] jika hanya ingin mengosongkan kartu pada space aktif ini saja.'
+    )
+
+    if (isTotalReset) {
+      factoryResetStorage()
+      const fresh = loadMultiSpaceStore()
+      setMultiStore(fresh)
+      alert('Aplikasi telah berhasil di-reset total dari 0 (Factory Reset)!')
+    } else {
+      if (confirm('Kosongkan semua kartu pada space aktif ini?')) {
+        const sample = getSampleWorkspace()
+        updateActiveSpace(() => sample)
+      }
+    }
   }
 
   return (
