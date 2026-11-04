@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { MaterialVaultCard, Attachment, ExternalLink } from '../types'
-import { X, Upload, FileText, Trash2, Plus, Globe, FolderArchive } from 'lucide-react'
+import { X, Upload, FileText, Trash2, Plus, Globe, FolderArchive, Edit3, Check } from 'lucide-react'
 import { fileToAttachment, formatBytes } from '../services/storage'
 
 interface MaterialModalProps {
@@ -28,6 +28,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
   const [links, setLinks] = useState<ExternalLink[]>(material?.links || [])
   const [newLinkTitle, setNewLinkTitle] = useState('')
   const [newLinkUrl, setNewLinkUrl] = useState('')
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -93,7 +94,42 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
     setNewLinkUrl('')
   }
 
+  const handleStartEditLink = (link: ExternalLink) => {
+    setEditingLinkId(link.id)
+    setNewLinkTitle(link.title)
+    setNewLinkUrl(link.url)
+  }
+
+  const handleCancelEditLink = () => {
+    setEditingLinkId(null)
+    setNewLinkTitle('')
+    setNewLinkUrl('')
+  }
+
+  const handleSaveEditedLink = () => {
+    if (!newLinkUrl.trim()) return
+    let formattedUrl = newLinkUrl.trim()
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = 'https://' + formattedUrl
+    }
+    setLinks(
+      links.map((l) =>
+        l.id === editingLinkId
+          ? {
+              ...l,
+              title: newLinkTitle.trim() || formattedUrl,
+              url: formattedUrl,
+            }
+          : l
+      )
+    )
+    handleCancelEditLink()
+  }
+
   const handleRemoveLink = (id: string) => {
+    if (editingLinkId === id) {
+      handleCancelEditLink()
+    }
     setLinks(links.filter((l) => l.id !== id))
   }
 
@@ -263,7 +299,11 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                 {links.map((link) => (
                   <div
                     key={link.id}
-                    className="flex items-center justify-between px-3 py-2 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 text-xs"
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl border text-xs transition ${
+                      editingLinkId === link.id
+                        ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700'
+                        : 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200/60 dark:border-blue-900/40'
+                    }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       <Globe className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -279,40 +319,99 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                         ({link.url})
                       </a>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveLink(link.id)}
-                      className="text-zinc-400 hover:text-red-500 shrink-0 ml-2"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditLink(link)}
+                        className="p-1 text-zinc-400 hover:text-blue-500 rounded transition"
+                        title="Edit tautan ini"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLink(link.id)}
+                        className="p-1 text-zinc-400 hover:text-red-500 rounded transition"
+                        title="Hapus tautan ini"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                value={newLinkTitle}
-                onChange={(e) => setNewLinkTitle(e.target.value)}
-                placeholder="Judul tautan (cth: Swagger API)"
-                className="w-full sm:w-1/3 px-3 py-1.5 text-xs bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100"
-              />
-              <input
-                type="url"
-                value={newLinkUrl}
-                onChange={(e) => setNewLinkUrl(e.target.value)}
-                placeholder="https://docs.internal/api"
-                className="flex-1 px-3 py-1.5 text-xs bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100"
-              />
-              <button
-                type="button"
-                onClick={handleAddLink}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 inline-flex items-center gap-1 justify-center shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" /> Tambah URL
-              </button>
+            {/* Form Input / Edit Tautan */}
+            <div
+              className={`p-3 rounded-xl border transition ${
+                editingLinkId
+                  ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-700/80 ring-1 ring-amber-400/50'
+                  : 'bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/80'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Globe className={`w-3.5 h-3.5 ${editingLinkId ? 'text-amber-600' : 'text-blue-500'}`} />
+                  {editingLinkId ? 'Ubah / Edit Tautan Terpilih' : 'Tambah Tautan / Bookmark Baru'}
+                </span>
+                {editingLinkId && (
+                  <span className="text-[10px] bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-medium">
+                    Mode Edit Tautan
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2.5">
+                <div>
+                  <input
+                    type="text"
+                    value={newLinkTitle}
+                    onChange={(e) => setNewLinkTitle(e.target.value)}
+                    placeholder="Judul tautan (cth: Swagger API / Confluence)"
+                    className="w-full px-3 py-1.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="url"
+                    value={newLinkUrl}
+                    onChange={(e) => setNewLinkUrl(e.target.value)}
+                    placeholder="https://docs.internal/api"
+                    className="w-full px-3 py-1.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100"
+                  />
+                </div>
+              </div>
+
+              {/* Action buttons: left-aligned to completely decouple from bottom right 'Simpan Materi' */}
+              <div className="flex items-center justify-start gap-2">
+                {editingLinkId ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleSaveEditedLink}
+                      className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-1.5 shadow-sm transition"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Simpan Perubahan Tautan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEditLink}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition"
+                    >
+                      Batal Edit
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAddLink}
+                    className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 inline-flex items-center gap-1.5 shadow-sm transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> + Tambah ke Daftar URL
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
