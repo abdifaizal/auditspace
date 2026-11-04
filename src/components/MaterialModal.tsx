@@ -29,9 +29,9 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
   const [newLinkTitle, setNewLinkTitle] = useState('')
   const [newLinkUrl, setNewLinkUrl] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+  const processFiles = async (files: FileList | File[]) => {
     if (!files || files.length === 0) return
     setIsUploading(true)
     try {
@@ -40,12 +40,37 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
         const att = await fileToAttachment(files[i])
         newAtts.push(att)
       }
-      setAttachments([...attachments, ...newAtts])
+      setAttachments((prev) => [...prev, ...newAtts])
     } catch (err) {
       alert('Gagal mengunggah dokumen: ' + err)
     } finally {
       setIsUploading(false)
+      setIsDragOver(false)
     }
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files) processFiles(files)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    if (e.dataTransfer.files) processFiles(e.dataTransfer.files)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
   }
 
   const handleRemoveAttachment = (id: string) => {
@@ -154,19 +179,39 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
               <label className="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                 Dokumen & Berkas Terlampir ({attachments.length})
               </label>
-              <label className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer transition">
-                <Upload className="w-3.5 h-3.5" />
-                <span>{isUploading ? 'Memproses...' : 'Tambah Berkas'}</span>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
+              <span className="text-[11px] text-zinc-400">PDF, Word, Excel, Gambar, dll.</span>
             </div>
 
-            {attachments.length > 0 ? (
+            {/* Drag & Drop Zone */}
+            <label
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`flex flex-col items-center justify-center p-4 mb-3 border-2 border-dashed rounded-xl cursor-pointer transition ${
+                isDragOver
+                  ? 'border-purple-500 bg-purple-50/80 dark:bg-purple-950/60 ring-2 ring-purple-400 scale-[1.01]'
+                  : 'border-zinc-300 dark:border-zinc-700 hover:border-purple-500 dark:hover:border-purple-400 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40'
+              }`}
+            >
+              <Upload className={`w-5 h-5 mb-1 transition ${isDragOver ? 'text-purple-600 animate-bounce' : 'text-zinc-400'}`} />
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                {isDragOver
+                  ? 'Lepaskan dokumen / PDF di sini!'
+                  : isUploading
+                  ? 'Sedang memproses dokumen...'
+                  : 'Klik atau Tarik & Lepas (Drag & Drop) Berkas ke Sini'}
+              </span>
+              <span className="text-[10px] text-zinc-400 mt-0.5">Bisa pilih sekaligus banyak berkas</span>
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </label>
+
+            {attachments.length > 0 && (
               <div className="space-y-2">
                 {attachments.map((att) => (
                   <div
@@ -203,10 +248,6 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                     </div>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <div className="p-4 text-center border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl text-xs text-zinc-400">
-                Belum ada dokumen yang dilampirkan. Klik "Tambah Berkas" untuk mengunggah.
               </div>
             )}
           </div>

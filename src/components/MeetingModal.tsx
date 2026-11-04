@@ -31,10 +31,9 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
   const [actionPoints, setActionPoints] = useState<string[]>(meeting?.actionPoints || [])
   const [newActionPoint, setNewActionPoint] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const processFile = async (file: File) => {
     setIsUploading(true)
     try {
       const att = await fileToAttachment(file)
@@ -43,7 +42,33 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
       alert('Gagal mengunggah berkas PDF: ' + err)
     } finally {
       setIsUploading(false)
+      setIsDragOver(false)
     }
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) processFile(file)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) processFile(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
   }
 
   const handleAddActionPoint = () => {
@@ -195,10 +220,24 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
                 </div>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition">
-                <Upload className="w-6 h-6 text-zinc-400 mb-1" />
-                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                  {isUploading ? 'Sedang memproses...' : 'Unggah PDF Undangan (Klik atau Drag & Drop)'}
+              <label
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition ${
+                  isDragOver
+                    ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-950/60 ring-2 ring-blue-400 scale-[1.01]'
+                    : 'border-zinc-300 dark:border-zinc-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40'
+                }`}
+              >
+                <Upload className={`w-6 h-6 mb-1 transition ${isDragOver ? 'text-blue-600 animate-bounce' : 'text-zinc-400'}`} />
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                  {isDragOver
+                    ? 'Lepaskan berkas PDF di sini!'
+                    : isUploading
+                    ? 'Sedang memproses PDF...'
+                    : 'Unggah PDF Undangan (Klik atau Drag & Drop)'}
                 </span>
                 <span className="text-[10px] text-zinc-400 mt-0.5">Format PDF disarankan</span>
                 <input

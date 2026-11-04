@@ -33,6 +33,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [completedBy, setCompletedBy] = useState(task?.completedBy || '')
   const [evidenceAttachment, setEvidenceAttachment] = useState<Attachment | null>(task?.evidenceAttachment || null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const handleStatusChange = (newStatus: TaskStatus) => {
     setStatus(newStatus)
@@ -46,9 +47,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
   }
 
-  const handleEvidenceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const processEvidenceFile = async (file: File) => {
     setIsUploading(true)
     try {
       const att = await fileToAttachment(file)
@@ -57,7 +56,33 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       alert('Gagal mengunggah dokumen bukti audit: ' + err)
     } finally {
       setIsUploading(false)
+      setIsDragOver(false)
     }
+  }
+
+  const handleEvidenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) processEvidenceFile(file)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) processEvidenceFile(file)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -317,10 +342,24 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <label className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-emerald-300 dark:border-emerald-800 rounded-xl cursor-pointer hover:bg-emerald-100/40 dark:hover:bg-emerald-950/40 transition">
-                    <Upload className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <label
+                    onDragOver={handleDragOver}
+                    onDragEnter={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-xl cursor-pointer transition ${
+                      isDragOver
+                        ? 'border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/60 ring-2 ring-emerald-400 scale-[1.01]'
+                        : 'border-emerald-300 dark:border-emerald-800/80 hover:bg-emerald-100/40 dark:hover:bg-emerald-950/40'
+                    }`}
+                  >
+                    <Upload className={`w-4 h-4 transition ${isDragOver ? 'text-emerald-600 animate-bounce' : 'text-emerald-600 dark:text-emerald-400'}`} />
                     <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                      {isUploading ? 'Mengunggah bukti...' : 'Lampirkan Dokumen Bukti (PDF / Gambar / Log)'}
+                      {isDragOver
+                        ? 'Lepaskan berkas bukti audit di sini!'
+                        : isUploading
+                        ? 'Mengunggah bukti...'
+                        : 'Lampirkan Dokumen Bukti (Klik atau Drag & Drop PDF / Gambar / Log)'}
                     </span>
                     <input
                       type="file"
