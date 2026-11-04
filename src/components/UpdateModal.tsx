@@ -22,6 +22,7 @@ interface UpdateInfo {
   version: string
   releaseDate?: string
   releaseNotes?: string
+  downloadUrl?: string
 }
 
 interface DownloadProgress {
@@ -107,17 +108,65 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
     if (isElectron) {
       ;(window as any).electronAPI.checkForUpdates(githubToken.trim() || undefined)
     } else {
-      // Mock for browser view
-      setTimeout(() => {
-        setStatus('not-available')
-      }, 1200)
+      const headers: Record<string, string> = {
+        Accept: 'application/vnd.github.v3+json',
+      }
+      if (githubToken.trim()) {
+        headers['Authorization'] = `Bearer ${githubToken.trim()}`
+      }
+
+      fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`, {
+        headers,
+      })
+        .then(async (res) => {
+          if (res.status === 404) {
+            setIsNoReleasesYet(true)
+            setStatus('not-available')
+            return
+          }
+          if (!res.ok) {
+            throw new Error(`GitHub API: ${res.status} ${res.statusText}`)
+          }
+          const release = await res.json()
+          const tag = (release.tag_name || '').replace(/^v/, '')
+          const current = currentVersion.replace(/^v/, '')
+
+          if (tag && tag !== current) {
+            const exeAsset = release.assets?.find((a: any) =>
+              a.name?.toLowerCase().endsWith('.exe')
+            )
+            setUpdateInfo({
+              version: release.tag_name,
+              releaseDate: release.published_at
+                ? new Date(release.published_at).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })
+                : undefined,
+              releaseNotes: release.body || 'Tidak ada catatan rilis.',
+              downloadUrl: exeAsset?.browser_download_url || release.html_url,
+            })
+            setStatus('available')
+          } else {
+            setStatus('not-available')
+          }
+        })
+        .catch((err) => {
+          setErrorMessage(err.message || 'Gagal memeriksa rilis dari GitHub.')
+          setStatus('error')
+        })
     }
   }
 
   const handleDownloadUpdate = () => {
-    setStatus('downloading')
     if (isElectron) {
+      setStatus('downloading')
       ;(window as any).electronAPI.downloadUpdate()
+    } else if (updateInfo?.downloadUrl) {
+      window.open(updateInfo.downloadUrl, '_blank')
+    } else {
+      window.open(`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, '_blank')
     }
   }
 

@@ -1,4 +1,4 @@
-name: Release AuditSpace Portable
+name: Release AuditSpace (Rust / Tauri 2.0)
 
 on:
   push:
@@ -7,6 +7,8 @@ on:
 
 jobs:
   release:
+    permissions:
+      contents: write
     runs-on: windows-latest
 
     steps:
@@ -19,13 +21,36 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build frontend
         run: npm run build
 
-      - name: Build and Publish Portable EXE to GitHub Releases
+      - name: Build and Publish Tauri Application
+        uses: tauri-apps/tauri-action@v0
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win portable --publish always
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'AuditSpace ${{ github.ref_name }}'
+          releaseBody: |
+            ## AuditSpace ${{ github.ref_name }} (Rust / Tauri 2.0)
+
+            🎉 Rilis resmi **AuditSpace** dengan mesin berbasis **Rust (Tauri 2.0)**.
+
+            ### Keunggulan Versi Rust:
+            - **Super Ringan & Cepat**: Ukuran file sangat ringkas (~10-15MB) dengan konsumsi RAM yang jauh lebih hemat dibanding wrapper biasa.
+            - **Performa Tinggi**: Native Windows WebView2 rendering yang sangat responsif.
+            - **Fitur Lengkap**: Infinite Canvas, Modular Kanban, Vault Berkas & Dokumen Bukti, Laporan Status Cetak A4 Unclipped, Multi-Space Workspace.
+            - **100% Data Aman & Privat**: Seluruh data audit tersimpan secara lokal di perangkat Anda.
+          releaseDraft: false
+          prerelease: false

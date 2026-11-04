@@ -1,6 +1,8 @@
 node_modules/
 release/
 dist/
+src-tauri/target/
+src-tauri/gen/schemas/
 .DS_Store
 *.log
 *.tmp
