@@ -48,19 +48,19 @@ jobs:
             🎉 Rilis resmi pembaruan fitur **AuditSpace ${{ github.ref_name }}**:
 
             ### ✨ Apa yang Baru di Versi Ini:
-            1. **Diferensiasi Kolom To-Do vs In-Progress**:
-               - Kolom To-Do dan In-Progress kini dipisah dengan status badge jelas.
-               - Tombol aksi cepat **`▶ Mulai Kerjakan`** memindahkan tugas secara instan.
-               - Tugas In-Progress memiliki badge berdenyut aktif **`● Sedang Berjalan`** dan border aktif.
-            2. **Bebas Kustomisasi & Tambah Kolom**:
-               - Seluruh judul kolom bawaan dapat diubah namanya (rename).
-               - Tersedia tombol **`+ Tambah Kotak / Kolom Baru`** untuk membuat kolom kustom dengan kartu kustom sendiri.
-            3. **Scrollbar Horizontal Tebal & Eye-Catching**:
-               - Scrollbar 12px dengan warna gradien modern, ditambah tombol navigasi **`[ ◀ Geser ]`** dan **`[ Geser ▶ ]`**.
-            4. **Kolaborasi Langsung P2P (WebRTC Live Share)**:
-               - Fitur **`[ 📡 Kolaborasi P2P ]`** untuk membagikan ruang kerja langsung antar laptop AuditSpace via kode 6-digit.
-               - Mendukung mode **Peninjau (Read-Only)** dan mode **Editor (Read-Write)**.
-            5. **Ekspor Dasbor Interaktif (.html)**:
-               - Tersedia di menu *Alat & Laporan* untuk mengunduh 1 file HTML eksekutif mandiri yang bisa dibuka di browser apa saja tanpa instalasi (100% Read-Only).
+            1. **Native Save File Dialog & Export Fix**:
+               - Tombol Export dan unduh berkas kini memanggil dialog bawaan Windows "Save As" secara andal melalui Rust engine.
+            2. **Ikon Installer EXE Konsisten**:
+               - Berkas installer setup (.exe) kini menggunakan ikon kustom resmi AuditSpace yang sama persis dengan ikon aplikasi terpasang.
+            3. **Versi Aplikasi di Title Bar**:
+               - Judul title bar aplikasi Windows kini menampilkan versi aplikasi secara jelas (contoh: `AuditSpace v1.0.2 - Workspace`).
+            4. **Solusi 403 Rate-Limit pada Auto-Updater**:
+               - Mengatasi batas kuota GitHub API 403 dengan fallback otomatis ke jaringan CDN mentah.
+            5. **Dukungan Berkas Lengkap pada Agenda**:
+               - Mendukung multi-lampiran: Excel daftar hadir, transkrip teks .txt/.log, dokumen Word, dan surat undangan PDF.
+            6. **Edit Tautan & Pemisahan Tombol**:
+               - Tautan di Materi Auditee kini dapat diedit dengan tombol pensil ✏️ dan tombol Tambah URL telah dipisahkan posisinya.
+            7. **Drag & Drop Berkas**:
+               - Drag-and-drop PDF dan dokumen langsung ke workspace dan modal tanpa kendala.
           releaseDraft: false
           prerelease: false

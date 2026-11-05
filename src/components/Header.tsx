@@ -104,6 +104,14 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
             <ShieldCheck className="w-4 h-4" />
           </div>
+          <div className="hidden lg:flex items-center gap-1.5 pr-2 border-r border-zinc-200 dark:border-zinc-800">
+            <span className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              AuditSpace
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
+              v1.0.2
+            </span>
+          </div>
         </div>
 
         {/* Space Dropdown Button */}

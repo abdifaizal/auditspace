@@ -65,7 +65,7 @@ function formatReleaseNotes(notes: string): string {
 export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
-  const currentVersion = '1.0.1'
+  const currentVersion = '1.0.2'
   const [status, setStatus] = useState<
     'idle' | 'checking' | 'available' | 'not-available' | 'error'
   >('idle')
@@ -82,6 +82,39 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
   const handleSaveToken = (val: string) => {
     setGithubToken(val)
     localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, val.trim())
+  }
+
+  const checkViaRawFallback = async () => {
+    try {
+      const rawRes = await fetch(
+        `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/package.json?_t=${Date.now()}`
+      )
+      if (!rawRes.ok) throw new Error('Raw fallback returned status ' + rawRes.status)
+      const pkg = await rawRes.json()
+      const rawVersion = (pkg.version || '').replace(/^v+/, '')
+      const current = currentVersion.replace(/^v+/, '')
+
+      if (rawVersion && rawVersion !== current) {
+        setUpdateInfo({
+          version: 'v' + rawVersion,
+          releaseDate: new Date().toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          }),
+          releaseNotes: `### Pembaruan AuditSpace v${rawVersion} Tersedia 🎉\nVersi terbaru telah dipublikasikan di repositori GitHub. Anda dapat mengunduh installer .exe langsung di bawah ini.`,
+          downloadUrl: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/v${rawVersion}/AuditSpace_${rawVersion}_x64-setup.exe`,
+        })
+        setStatus('available')
+      } else {
+        setStatus('not-available')
+      }
+    } catch {
+      setErrorMessage(
+        'Batas panggilan GitHub API tercapai (403 Rate Limit) atau koneksi terputus. Silakan klik tautan rilis di bawah untuk mengunduh di browser.'
+      )
+      setStatus('error')
+    }
   }
 
   const handleCheckUpdates = () => {
@@ -104,6 +137,10 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
           setIsNoReleasesYet(true)
           setStatus('not-available')
           return
+        }
+        if (res.status === 403) {
+          // GitHub API Rate Limit reached: automatically fall back to raw.githubusercontent.com
+          return checkViaRawFallback()
         }
         if (!res.ok) {
           throw new Error(`GitHub API: ${res.status} ${res.statusText}`)
@@ -134,8 +171,8 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
         }
       })
       .catch((err) => {
-        setErrorMessage(err.message || 'Gagal memeriksa rilis dari GitHub.')
-        setStatus('error')
+        console.warn('GitHub API check failed, trying raw CDN fallback:', err)
+        checkViaRawFallback()
       })
   }
 
@@ -147,7 +184,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
   const cleanLatestVersion = (updateInfo?.version || '').replace(/^v+/, '')
   const directDownloadUrl =
     updateInfo?.downloadUrl ||
-    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tag/${updateInfo?.version || 'v1.0.1'}`
+    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tag/${updateInfo?.version || 'v1.0.2'}`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in">

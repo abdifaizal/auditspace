@@ -1,5 +1,6 @@
 import JSZip from 'jszip'
 import { AuditWorkspace, Attachment, MultiSpaceStore } from '../types'
+import { saveFileWithDialog } from './nativeSave'
 import { getSampleWorkspace } from './sampleData'
 
 const MULTI_STORE_KEY = 'auditspace_multi_store_v1'
@@ -108,46 +109,18 @@ export async function fileToAttachment(file: File): Promise<Attachment> {
   })
 }
 
-// Robust downloader that preserves the original filename on Chromium/Electron
-export function downloadAttachment(att: Attachment): void {
-  try {
-    const parts = att.dataUrl.split(',')
-    const base64Data = parts.length > 1 ? parts[1] : parts[0]
-    const byteCharacters = atob(base64Data)
-    const byteNumbers = new Array(byteCharacters.length)
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i)
-    }
-    const byteArray = new Uint8Array(byteNumbers)
-    const mimeMatch = att.dataUrl.match(/:(.*?);/)
-    const mimeType = mimeMatch ? mimeMatch[1] : (att.type || 'application/octet-stream')
-
-    const blob = new Blob([byteArray], { type: mimeType })
-    const url = URL.createObjectURL(blob)
-
-    const a = document.createElement('a')
-    a.href = url
-    a.download = att.name // Preserves exact original filename!
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-
-    setTimeout(() => {
-      URL.revokeObjectURL(url)
-    }, 2000)
-  } catch (err) {
-    console.warn('Blob download failed, using standard fallback:', err)
-    const a = document.createElement('a')
-    a.href = att.dataUrl
-    a.download = att.name
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-  }
+// Robust downloader that preserves original filename and uses native dialog in Tauri
+export async function downloadAttachment(att: Attachment): Promise<void> {
+  const parts = att.dataUrl.split(',')
+  const base64Data = parts.length > 1 ? parts[1] : parts[0]
+  await saveFileWithDialog(att.name, base64Data, {
+    isBase64: true,
+    mimeType: att.type,
+  })
 }
 
 // Export complete workspace to .auditpkg bundle (ZIP file)
-export async function exportAuditPackage(workspace: AuditWorkspace): Promise<void> {
+export async function exportAuditPackage(workspace: AuditWorkspace): Promise<{ success: boolean; path?: string; cancelled?: boolean }> {
   const zip = new JSZip()
 
   // 1. Manifest
@@ -196,19 +169,15 @@ export async function exportAuditPackage(workspace: AuditWorkspace): Promise<voi
   // Add full workspace.json
   zip.file('workspace.json', JSON.stringify(cleanWorkspace, null, 2))
 
-  // Generate ZIP blob and download
-  const blob = await zip.generateAsync({ type: 'blob' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
+  // Generate Base64 ZIP
+  const base64Data = await zip.generateAsync({ type: 'base64' })
   const safeName = (workspace.projectMeta.name || 'AuditWorkspace').replace(/[^a-zA-Z0-9_-]/g, '_')
-  a.href = url
-  a.download = `${safeName}_${new Date().toISOString().slice(0, 10)}.auditpkg`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  setTimeout(() => {
-    URL.revokeObjectURL(url)
-  }, 2000)
+  const filename = `${safeName}_${new Date().toISOString().slice(0, 10)}.auditpkg`
+
+  return await saveFileWithDialog(filename, base64Data, {
+    isBase64: true,
+    mimeType: 'application/zip',
+  })
 }
 
 // Import complete workspace from a .auditpkg file

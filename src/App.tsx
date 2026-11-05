@@ -129,6 +129,12 @@ export function App() {
     }
   }, [darkMode])
 
+  // Synchronize document.title to display app version on the native title bar
+  useEffect(() => {
+    const spaceName = activeSpace?.projectMeta?.name || 'Workspace'
+    document.title = `AuditSpace v1.0.2 - ${spaceName}`
+  }, [activeSpace?.projectMeta?.name])
+
   // Helper to update active space
   const updateActiveSpace = (updater: (prev: AuditWorkspace) => AuditWorkspace) => {
     setMultiStore((prev) => {
@@ -535,7 +541,11 @@ export function App() {
   // EXPORT / IMPORT / RESET
   const handleExport = async () => {
     try {
-      await exportAuditPackage(activeSpace)
+      const res = await exportAuditPackage(activeSpace)
+      if (res && res.success && res.path) {
+        setToastMessage(`✓ Bundle .auditpkg tersimpan di:\n${res.path}`)
+        setTimeout(() => setToastMessage(null), 5000)
+      }
     } catch (err) {
       alert('Gagal mengekspor bundle .auditpkg: ' + err)
     }

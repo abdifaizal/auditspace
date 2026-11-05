@@ -1,6 +1,7 @@
 import { AuditWorkspace } from '../types'
+import { saveFileWithDialog } from './nativeSave'
 
-export function exportInteractiveHtmlReport(workspace: AuditWorkspace): void {
+export async function exportInteractiveHtmlReport(workspace: AuditWorkspace): Promise<void> {
   const meta = workspace.projectMeta
   const totalTasks = workspace.tasks.length
   const completedTasks = workspace.tasks.filter((t) => t.status === 'done').length
@@ -374,15 +375,15 @@ export function exportInteractiveHtmlReport(workspace: AuditWorkspace): void {
 </body>
 </html>`
 
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' })
   const sanitizedName = (meta.name || 'Workspace').replace(/[^a-zA-Z0-9_-]/g, '_')
   const filename = `AuditSpace_Report_${sanitizedName}.html`
 
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+  const result = await saveFileWithDialog(filename, htmlContent, {
+    isBase64: false,
+    mimeType: 'text/html;charset=utf-8',
+  })
+
+  if (result.success && result.path) {
+    alert(`✓ Laporan HTML Interaktif berhasil disimpan ke:\n${result.path}`)
+  }
 }
