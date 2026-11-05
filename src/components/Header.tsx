@@ -101,8 +101,8 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Brand & Multi-Space Selector */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
-            <ShieldCheck className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm">
+            <img src="/app-icon.png" alt="AuditSpace Logo" className="w-6 h-6 object-contain" />
           </div>
           <div className="hidden lg:flex items-center gap-1.5 pr-2 border-r border-zinc-200 dark:border-zinc-800">
             <span className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-100">

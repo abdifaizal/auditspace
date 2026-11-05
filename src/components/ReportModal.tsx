@@ -86,7 +86,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ workspace, isOpen, onC
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-6 h-6 text-blue-600 print:text-black" />
+                  <img src="/app-icon.png" alt="AuditSpace" className="w-6 h-6 object-contain" />
                   <span className="text-xs font-bold uppercase tracking-widest text-zinc-500 print:text-zinc-600">
                     KERTAS KERJA & MONITORING PELAKSANAAN AUDIT
                   </span>
