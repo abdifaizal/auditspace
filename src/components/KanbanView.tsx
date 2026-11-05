@@ -32,7 +32,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ListTodo,
-  Loader2,
+  Timer,
   Columns,
   Sparkles,
 } from 'lucide-react'
@@ -718,7 +718,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             <div className="p-3.5 border-b border-blue-200 dark:border-blue-900/60 flex items-center justify-between bg-white dark:bg-zinc-900">
               <div className="flex items-center gap-2 truncate">
                 <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 shrink-0">
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <Timer className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="truncate">
                   <div className="flex items-center gap-1.5">
