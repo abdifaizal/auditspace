@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { MaterialVaultCard, Attachment, ExternalLink } from '../types'
 import { X, Upload, FileText, Trash2, Plus, Globe, FolderArchive, Edit3, Check } from 'lucide-react'
 import { fileToAttachment, formatBytes } from '../services/storage'
+import { openExternalUrl } from '../services/nativeSave'
 
 interface MaterialModalProps {
   material: MaterialVaultCard | null
@@ -310,14 +311,14 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                       <span className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
                         {link.title}
                       </span>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-zinc-500 hover:underline truncate max-w-xs"
+                      <button
+                        type="button"
+                        onClick={() => openExternalUrl(link.url)}
+                        className="text-[11px] text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 hover:underline truncate max-w-xs text-left cursor-pointer"
+                        title="Buka tautan di browser"
                       >
                         ({link.url})
-                      </a>
+                      </button>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 ml-2">
                       <button

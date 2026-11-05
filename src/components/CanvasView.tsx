@@ -28,6 +28,7 @@ import {
   Wand2,
 } from 'lucide-react'
 import { formatBytes, formatDateString } from '../services/storage'
+import { openExternalUrl } from '../services/nativeSave'
 
 interface CanvasViewProps {
   meetings: MeetingCard[]
@@ -516,12 +517,15 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
                   </p>
                   <div className="space-y-1.5">
                     {mat.links.map((link) => (
-                      <a
+                      <button
                         key={link.id}
-                        href={link.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-between p-2 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100/60 dark:border-blue-900/30 hover:border-blue-300 transition text-xs group/link"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openExternalUrl(link.url)
+                        }}
+                        className="w-full flex items-center justify-between p-2 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100/60 dark:border-blue-900/30 hover:border-blue-300 transition text-xs group/link text-left cursor-pointer"
+                        title={`Buka ${link.url} di browser`}
                       >
                         <div className="flex items-center gap-2 truncate">
                           <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
@@ -530,7 +534,7 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
                           </span>
                         </div>
                         <ExternalLink className="w-3 h-3 text-zinc-400 shrink-0 ml-2" />
-                      </a>
+                      </button>
                     ))}
                   </div>
                 </div>

@@ -63,3 +63,33 @@ export async function saveFileWithDialog(
     return { success: false }
   }
 }
+
+/**
+ * Opens an external URL in the system's default web browser (Chrome, Edge, Firefox, etc.).
+ * In Tauri desktop, invokes native OS browser launcher.
+ * In a web browser, uses window.open.
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  if (!url) return
+
+  let formattedUrl = url.trim()
+  if (!/^https?:\/\//i.test(formattedUrl)) {
+    formattedUrl = 'https://' + formattedUrl
+  }
+
+  const isTauri =
+    typeof window !== 'undefined' &&
+    ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
+
+  if (isTauri) {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core')
+      await invoke('open_in_browser', { url: formattedUrl })
+      return
+    } catch (err) {
+      console.warn('Tauri open_in_browser failed, trying window.open:', err)
+    }
+  }
+
+  window.open(formattedUrl, '_blank', 'noopener,noreferrer')
+}

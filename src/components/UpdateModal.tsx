@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Key,
 } from 'lucide-react'
+import { openExternalUrl } from '../services/nativeSave'
 
 interface UpdateModalProps {
   isOpen: boolean
@@ -78,10 +79,20 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
     return localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || ''
   })
   const [showTokenInput, setShowTokenInput] = useState(false)
+  const [isOpeningDownload, setIsOpeningDownload] = useState(false)
 
   const handleSaveToken = (val: string) => {
     setGithubToken(val)
     localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, val.trim())
+  }
+
+  const handleDownloadClick = async () => {
+    setIsOpeningDownload(true)
+    try {
+      await openExternalUrl(directDownloadUrl)
+    } catch (err) {
+      alert('Gagal membuka link unduhan: ' + err)
+    }
   }
 
   const checkViaRawFallback = async () => {
@@ -275,18 +286,25 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
                   )}
                 </div>
 
-                {/* Direct Native Download Anchor Tag */}
-                <a
-                  href={directDownloadUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                  className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow transition flex items-center gap-1.5 shrink-0"
+                {/* Direct Download Button */}
+                <button
+                  type="button"
+                  onClick={handleDownloadClick}
+                  className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow transition flex items-center gap-1.5 shrink-0 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Unduh Pembaruan (.exe)</span>
-                </a>
+                  <span>{isOpeningDownload ? 'Membuka Browser...' : 'Unduh Pembaruan (.exe)'}</span>
+                </button>
               </div>
+
+              {isOpeningDownload && (
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[11px] flex items-center gap-2 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    Browser Anda telah dibuka untuk mengunduh installer <strong>AuditSpace_{cleanLatestVersion}_x64-setup.exe</strong>. Silakan periksa jendela/tab download browser Anda.
+                  </span>
+                </div>
+              )}
 
               {/* Formatted Changelog */}
               {updateInfo.releaseNotes && (
@@ -306,15 +324,14 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
               {/* Direct Link fallback */}
               <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-1">
                 <span>File installer:</span>
-                <a
-                  href={directDownloadUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline font-semibold flex items-center gap-1"
+                <button
+                  type="button"
+                  onClick={handleDownloadClick}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 text-left"
                 >
                   <span>AuditSpace_{cleanLatestVersion}_x64-setup.exe</span>
                   <ExternalLink className="w-3 h-3" />
-                </a>
+                </button>
               </div>
             </div>
           )}
@@ -364,15 +381,14 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
           {/* Link to GitHub Releases Page */}
           <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px]">
             <span className="text-zinc-400">Lihat rilis di browser:</span>
-            <a
-              href={`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold"
+            <button
+              type="button"
+              onClick={() => openExternalUrl(`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases`)}
+              className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold cursor-pointer bg-transparent border-none p-0"
             >
               <span>github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases</span>
               <ExternalLink className="w-3 h-3" />
-            </a>
+            </button>
           </div>
         </div>
 

@@ -37,6 +37,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { formatBytes, formatDateString } from '../services/storage'
+import { openExternalUrl } from '../services/nativeSave'
 import { CustomColumnModal } from './CustomColumnModal'
 import { CustomCardModal } from './CustomCardModal'
 
@@ -560,20 +561,22 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                         Tautan URL ({mat.links.length})
                       </p>
                       {mat.links.map((link) => (
-                        <a
+                        <button
                           key={link.id}
-                          href={link.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center justify-between p-1.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-[11px] text-blue-700 dark:text-blue-300 hover:underline"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openExternalUrl(link.url)
+                          }}
+                          className="w-full flex items-center justify-between p-1.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-[11px] text-blue-700 dark:text-blue-300 hover:underline text-left cursor-pointer"
+                          title={`Buka ${link.url} di browser`}
                         >
                           <div className="flex items-center gap-1.5 truncate">
                             <Globe className="w-3 h-3 text-blue-500 shrink-0" />
                             <span className="truncate">{link.title}</span>
                           </div>
                           <ExternalLink className="w-3 h-3 shrink-0 ml-1" />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}

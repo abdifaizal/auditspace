@@ -24,10 +24,35 @@ fn save_file_to_disk(filename: String, base64_data: String) -> Result<String, St
   }
 }
 
+#[tauri::command]
+fn open_in_browser(url: String) -> Result<(), String> {
+  #[cfg(target_os = "windows")]
+  {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    std::process::Command::new("cmd")
+      .args(["/c", "start", "", &url])
+      .creation_flags(CREATE_NO_WINDOW)
+      .spawn()
+      .map_err(|e| format!("Gagal membuka browser: {}", e))?;
+    return Ok(());
+  }
+
+  #[cfg(not(target_os = "windows"))]
+  {
+    let cmd = if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
+    std::process::Command::new(cmd)
+      .arg(&url)
+      .spawn()
+      .map_err(|e| format!("Gagal membuka browser: {}", e))?;
+    return Ok(());
+  }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![save_file_to_disk])
+    .invoke_handler(tauri::generate_handler![save_file_to_disk, open_in_browser])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
