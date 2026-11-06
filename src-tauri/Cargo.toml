@@ -1,6 +1,6 @@
 [package]
 name = "auditspace"
-version = "1.0.3"
+version = "1.0.4"
 description = "AuditSpace - Productivity workspace for audit engagements"
 authors = ["abdifaizal"]
 license = "MIT"

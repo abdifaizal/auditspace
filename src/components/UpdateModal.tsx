@@ -66,7 +66,7 @@ function formatReleaseNotes(notes: string): string {
 export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
-  const currentVersion = '1.0.3'
+  const currentVersion = '1.0.4'
   const [status, setStatus] = useState<
     'idle' | 'checking' | 'available' | 'not-available' | 'error'
   >('idle')
@@ -195,7 +195,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
   const cleanLatestVersion = (updateInfo?.version || '').replace(/^v+/, '')
   const directDownloadUrl =
     updateInfo?.downloadUrl ||
-    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tag/${updateInfo?.version || 'v1.0.3'}`
+    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tag/${updateInfo?.version || 'v1.0.4'}`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in">

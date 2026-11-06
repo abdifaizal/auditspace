@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
               AuditSpace
             </span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
-              v1.0.3
+              v1.0.4
             </span>
           </div>
         </div>
