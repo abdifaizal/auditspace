@@ -126,25 +126,29 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 transition truncate max-w-[180px] sm:max-w-[260px]">
+                <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 transition truncate max-w-[120px] sm:max-w-[180px] xl:max-w-[260px]">
                   {projectMeta.name}
                 </span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-semibold uppercase">
                   Space
                 </span>
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"
+                  title={`Status: Tersimpan otomatis (${lastSavedTime || 'Baru saja'})`}
+                />
                 <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-600 transition" />
               </div>
 
-              {/* Subtitle: Timeline & Auditee */}
-              <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+              {/* Subtitle: Timeline & Auditee (Hidden on compact screens) */}
+              <div className="hidden xl:flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400">
                 <Calendar className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
                 <span className="truncate max-w-[130px]">{projectMeta.timeline}</span>
                 <span>•</span>
                 <span className="truncate max-w-[110px]">{projectMeta.auditeeName}</span>
               </div>
 
-              {/* WAKTU SIMPAN TERAKHIR KECIL DI BAWAH JUDUL */}
-              <div className="flex items-center gap-1 text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">
+              {/* WAKTU SIMPAN TERAKHIR KECIL DI BAWAH JUDUL (Visible on 2xl) */}
+              <div className="hidden 2xl:flex items-center gap-1 text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Tersimpan otomatis ({lastSavedTime || 'Baru saja'})</span>
               </div>
@@ -262,11 +266,11 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Center: View Switcher (High-Contrast Segmented Control with Divider) */}
-      <div className="flex items-center gap-3 shrink-0">
-        <div className="flex items-center p-1 rounded-xl bg-zinc-200/80 dark:bg-zinc-800/90 border border-zinc-300/80 dark:border-zinc-700 shadow-inner">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center p-0.5 sm:p-1 rounded-xl bg-zinc-200/80 dark:bg-zinc-800/90 border border-zinc-300/80 dark:border-zinc-700 shadow-inner">
           <button
             onClick={() => onViewModeChange('canvas')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition ${
+            className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs rounded-lg transition ${
               viewMode === 'canvas'
                 ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 font-bold shadow-sm border border-zinc-200/60 dark:border-zinc-700/60'
                 : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium'
@@ -274,11 +278,12 @@ export const Header: React.FC<HeaderProps> = ({
             title="Beralih ke Tampilan Infinite Canvas"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <span className="hidden sm:inline">Infinite Canvas</span>
+            <span className="hidden xl:inline">Infinite Canvas</span>
+            <span className="hidden md:inline xl:hidden">Canvas</span>
           </button>
           <button
             onClick={() => onViewModeChange('kanban')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition ${
+            className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs rounded-lg transition ${
               viewMode === 'kanban'
                 ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 font-bold shadow-sm border border-zinc-200/60 dark:border-zinc-700/60'
                 : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium'
@@ -286,20 +291,21 @@ export const Header: React.FC<HeaderProps> = ({
             title="Beralih ke Tampilan Modular Kanban"
           >
             <LayoutGrid className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-            <span className="hidden sm:inline">Modular Kanban</span>
+            <span className="hidden xl:inline">Modular Kanban</span>
+            <span className="hidden md:inline xl:hidden">Kanban</span>
           </button>
         </div>
 
         {/* Visual Divider Separator before Right Actions */}
-        <div className="h-6 w-px bg-zinc-300 dark:bg-zinc-700 hidden md:block shrink-0" />
+        <div className="h-6 w-px bg-zinc-300 dark:bg-zinc-700 hidden lg:block shrink-0" />
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* P2P LIVE COLLABORATION BUTTON */}
         <button
           onClick={onOpenShareModal}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition border ${
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-xl transition border ${
             isCollaborating
               ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-sm'
               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 border-zinc-200/80 dark:border-zinc-700'
@@ -307,7 +313,8 @@ export const Header: React.FC<HeaderProps> = ({
           title="Kolaborasi Langsung P2P (Bagi Ruang atau Gabung Ruang Rekan)"
         >
           <Radio className={`w-3.5 h-3.5 ${isCollaborating ? 'text-emerald-500 animate-pulse' : 'text-blue-500'}`} />
-          <span className="hidden md:inline">{isCollaborating ? `Live (${collabRoomId})` : 'Kolaborasi P2P'}</span>
+          <span className="hidden xl:inline">{isCollaborating ? `Live (${collabRoomId})` : 'Kolaborasi P2P'}</span>
+          <span className="hidden lg:inline xl:hidden">{isCollaborating ? 'Live' : 'P2P'}</span>
         </button>
 
         {/* DROPDOWN MENU ALAT & LAPORAN AUDIT (Menggabungkan Laporan PDF, Vault Berkas, dan Cloud Sync) */}
@@ -318,10 +325,12 @@ export const Header: React.FC<HeaderProps> = ({
               setShowAddMenu(false)
               setShowSpaceMenu(false)
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition border border-zinc-200/80 dark:border-zinc-700"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition border border-zinc-200/80 dark:border-zinc-700"
+            title="Menu Alat & Laporan Audit"
           >
             <Briefcase className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>Alat & Laporan</span>
+            <span className="hidden xl:inline">Alat & Laporan</span>
+            <span className="hidden md:inline xl:hidden">Laporan</span>
             <ChevronDown className="w-3 h-3 opacity-60" />
           </button>
 
@@ -492,11 +501,11 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Export .auditpkg */}
         <button
           onClick={onExport}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+          className="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
           title="Export Space ini + Berkas PDF ke Bundle .auditpkg"
         >
           <FileUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          <span className="hidden sm:inline">Export</span>
+          <span className="hidden 2xl:inline">Export</span>
         </button>
 
         {/* Import .auditpkg */}
@@ -509,11 +518,11 @@ export const Header: React.FC<HeaderProps> = ({
         />
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+          className="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
           title="Buka / Import file .auditpkg yang tersimpan di disk atau cloud drive"
         >
           <FileDown className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span className="hidden sm:inline">Import</span>
+          <span className="hidden 2xl:inline">Import</span>
         </button>
 
         {/* Cek Update */}
