@@ -4,6 +4,21 @@ Semua catatan pembaruan dan perubahan resmi pada aplikasi **AuditSpace** didokum
 
 ---
 
+## [1.0.11] — 2026-11-06
+### 🛡️ Isolasi Ruang P2P & Pemulihan Data Otomatis
+- **Pemulihan Otomatis Ruang Kerja Asli (`Advisory QITA 2026`)**:
+  - Mengembalikan seluruh data ruang kerja `Advisory QITA 2026` (beserta agenda rapat diskusi DRB, notula rapat, lampiran PDF `22127218.pdf`, transkrip lengkap, materi tautan Confluence & Play Store, serta catatan tempel reminder) ke daftar ruang kerja pengguna.
+- **Isolasi P2P Peer Workspace (*Anti-Overwrite Guarantee*)**:
+  - Ruang kerja yang diterima saat bergabung ke sesi rekan (*peer role*) kini otomatis dialokasikan ke ID sesi terisolasi (`p2p-session-*`), sehingga **TIDAK AKAN PERNAH menimpa (*overwrite*)** ruang kerja lokal pengguna meskipun kedua aplikasi memiliki ID awal yang sama.
+- **Tombol & Alur Kembali ke Ruang Sendiri (*Return to Local Space*)**:
+  - Menambahkan banner informatif dengan tombol **"Kembali ke Space Saya"** saat pengguna sedang berada di dalam ruang kerja rekan.
+  - Memperbarui tombol di modal kolaborasi menjadi **"Keluar & Kembali ke Space Saya"**.
+  - Saat sesi P2P selesai atau diputus, aplikasi secara otomatis mengembalikan tampilan aktif ke ruang kerja audit lokal pengguna.
+- **Pembeda Badge P2P pada Dropdown Ruang Kerja**:
+  - Daftar pemilih ruang kerja kini menampilkan penanda `P2P` khusus pada ruang kerja rekan agar pengguna dapat dengan mudah beralih antara ruang lokal dan ruang kolaborasi bersama.
+
+---
+
 ## [1.0.10] — 2026-11-06
 ### 🎨 Tipografi & Perbaikan Antarmuka
 - **Rata Kanan-Kiri & Perataan Paragraf Bullet/Numbering (*Justified Hanging Indent*)**:

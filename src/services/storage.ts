@@ -1,7 +1,7 @@
 import JSZip from 'jszip'
 import { AuditWorkspace, Attachment, MultiSpaceStore } from '../types'
 import { saveFileWithDialog } from './nativeSave'
-import { getSampleWorkspace } from './sampleData'
+import { getSampleWorkspace, getRecoveredQitaWorkspace } from './sampleData'
 
 const MULTI_STORE_KEY = 'auditspace_multi_store_v1'
 const LEGACY_STORAGE_KEY = 'auditspace_workspace_legacy_v1'
@@ -12,6 +12,63 @@ export function loadMultiSpaceStore(): MultiSpaceStore {
     if (raw) {
       const parsed = JSON.parse(raw) as MultiSpaceStore
       if (parsed && Array.isArray(parsed.spaces) && parsed.spaces.length > 0) {
+        let modified = false
+
+        // RECOVERY MIGRATION:
+        // Check if Advisory QITA 2026 was lost or overwritten by a P2P session
+        const hasQita = parsed.spaces.some((s) =>
+          s.projectMeta?.name?.toLowerCase().includes('qita')
+        )
+
+        if (!hasQita) {
+          // If Audit BGF or another space had ID 'proj-default-1', re-id it to prevent collision
+          parsed.spaces = parsed.spaces.map((s) => {
+            if (s.projectMeta?.id === 'proj-default-1') {
+              modified = true
+              const safeId = s.projectMeta.name.includes('BGF')
+                ? 'proj-audit-bgf-2026'
+                : 'proj-' + Math.random().toString(36).substring(2, 9)
+              return {
+                ...s,
+                projectMeta: { ...s.projectMeta, id: safeId },
+              }
+            }
+            return s
+          })
+
+          const recoveredQita = getRecoveredQitaWorkspace()
+          parsed.spaces = [recoveredQita, ...parsed.spaces]
+          parsed.activeSpaceId = recoveredQita.projectMeta.id
+          modified = true
+        }
+
+        // Ensure unique IDs across all spaces to prevent collisions
+        const seenIds = new Set<string>()
+        parsed.spaces = parsed.spaces.map((s) => {
+          if (seenIds.has(s.projectMeta.id)) {
+            modified = true
+            return {
+              ...s,
+              projectMeta: {
+                ...s.projectMeta,
+                id: 'proj-' + Math.random().toString(36).substring(2, 9),
+              },
+            }
+          }
+          seenIds.add(s.projectMeta.id)
+          return s
+        })
+
+        // Ensure activeSpaceId points to an existing space
+        if (!parsed.spaces.some((s) => s.projectMeta.id === parsed.activeSpaceId)) {
+          parsed.activeSpaceId = parsed.spaces[0].projectMeta.id
+          modified = true
+        }
+
+        if (modified) {
+          saveMultiSpaceStore(parsed)
+        }
+
         return parsed
       }
     }

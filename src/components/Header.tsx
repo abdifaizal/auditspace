@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
               AuditSpace
             </span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
-              v1.0.10
+              v1.0.11
             </span>
           </div>
         </div>
@@ -204,9 +204,16 @@ export const Header: React.FC<HeaderProps> = ({
                           </div>
                         )}
                         <div className="truncate">
-                          <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                            {sp.projectMeta.name}
-                          </p>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                              {sp.projectMeta.name}
+                            </p>
+                            {sp.projectMeta.id.startsWith('p2p-session-') && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 font-bold uppercase shrink-0">
+                                P2P
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[10px] text-zinc-500 truncate flex items-center gap-1">
                             <Building className="w-2.5 h-2.5" />
                             {sp.projectMeta.auditeeName} • {sp.tasks.length} Tugas

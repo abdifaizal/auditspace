@@ -136,7 +136,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   className="px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-100/60 dark:hover:bg-red-950/40 rounded-lg transition flex items-center gap-1 border border-red-200 dark:border-red-900/40"
                 >
                   <PowerOff className="w-3 h-3" />
-                  <span>Putuskan Sesi</span>
+                  <span>{collabState.role === 'peer' ? 'Keluar & Kembali ke Space Saya' : 'Putuskan Sesi'}</span>
                 </button>
               </div>
 

@@ -105,9 +105,70 @@ export function App() {
 
   // P2P Collaboration Sync Listener
   useEffect(() => {
-    const unsubState = p2pSync.subscribeState(setCollabState)
+    let prevConnected = false
+    let prevRole: 'host' | 'peer' | null = null
+
+    const unsubState = p2pSync.subscribeState((newState) => {
+      setCollabState(newState)
+
+      // When peer disconnects, restore local space as active
+      if (prevConnected && !newState.isConnected && prevRole === 'peer') {
+        setMultiStore((prevStore) => {
+          const fallback =
+            prevStore.spaces.find((s) => !s.projectMeta.id.startsWith('p2p-session-')) ||
+            prevStore.spaces[0]
+          if (fallback && prevStore.activeSpaceId !== fallback.projectMeta.id) {
+            return {
+              ...prevStore,
+              activeSpaceId: fallback.projectMeta.id,
+            }
+          }
+          return prevStore
+        })
+      }
+
+      prevConnected = newState.isConnected
+      prevRole = newState.role
+    })
+
     const unsubWs = p2pSync.subscribeWorkspace((syncedWs) => {
       setMultiStore((prev) => {
+        const state = p2pSync.getState()
+        if (state.role === 'peer') {
+          // ISOLATED REMOTE PEER SPACE: Never overwrite local space
+          const remoteSpaceId = `p2p-session-${state.roomId || 'shared'}`
+          const remoteWs: AuditWorkspace = {
+            ...syncedWs,
+            projectMeta: {
+              ...syncedWs.projectMeta,
+              id: remoteSpaceId,
+              name: syncedWs.projectMeta.name.includes('(P2P)')
+                ? syncedWs.projectMeta.name
+                : `${syncedWs.projectMeta.name} (P2P)`,
+            },
+          }
+
+          const existingIndex = prev.spaces.findIndex(
+            (s) => s.projectMeta.id === remoteSpaceId
+          )
+
+          let updatedSpaces: AuditWorkspace[]
+          if (existingIndex >= 0) {
+            updatedSpaces = prev.spaces.map((s, idx) =>
+              idx === existingIndex ? remoteWs : s
+            )
+          } else {
+            updatedSpaces = [...prev.spaces, remoteWs]
+          }
+
+          return {
+            ...prev,
+            activeSpaceId: remoteSpaceId,
+            spaces: updatedSpaces,
+          }
+        }
+
+        // Host mode or standalone sync
         const exists = prev.spaces.some((s) => s.projectMeta.id === syncedWs.projectMeta.id)
         return {
           ...prev,
@@ -133,11 +194,11 @@ export function App() {
     if (isTauri) {
       import('@tauri-apps/api/window')
         .then(({ getCurrentWindow }) => {
-          getCurrentWindow().setTitle('AuditSpace v1.0.10').catch(() => {})
+          getCurrentWindow().setTitle('AuditSpace v1.0.11').catch(() => {})
         })
         .catch(() => {})
     }
-    document.title = 'AuditSpace v1.0.10'
+    document.title = 'AuditSpace v1.0.11'
   }, [])
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
@@ -663,22 +724,53 @@ export function App() {
         onToggleDarkMode={handleToggleDarkMode}
       />
 
-      {/* Read-Only Collaboration Banner */}
-      {collabState.isConnected && collabState.accessMode === 'read-only' && (
-        <div className="bg-amber-500/15 border-b border-amber-500/30 px-6 py-2 flex items-center justify-between text-xs text-amber-800 dark:text-amber-300">
+      {/* Peer Collaboration Banner with Disconnect & Return to Local Space */}
+      {collabState.isConnected && collabState.role === 'peer' && (
+        <div
+          className={`px-6 py-2 flex items-center justify-between text-xs border-b ${
+            collabState.accessMode === 'read-only'
+              ? 'bg-amber-500/15 border-amber-500/30 text-amber-800 dark:text-amber-300'
+              : 'bg-blue-500/15 border-blue-500/30 text-blue-800 dark:text-blue-300'
+          }`}
+        >
           <div className="flex items-center gap-2 font-medium">
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 font-bold text-[10px] uppercase tracking-wider">
-              🔒 Mode Peninjau (Read-Only)
+            <span
+              className={`px-2 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-wider ${
+                collabState.accessMode === 'read-only' ? 'bg-amber-500/20' : 'bg-blue-500/20'
+              }`}
+            >
+              {collabState.accessMode === 'read-only' ? '🔒 Peninjau (Read-Only)' : '✏️ Editor P2P'}
             </span>
             <span>
-              Anda terhubung ke ruang kolaborasi <strong>{collabState.roomId}</strong>. Perubahan dinonaktifkan untuk peninjau.
+              Anda sedang berada di ruang rekan: <strong>{activeSpace.projectMeta.name}</strong> ({collabState.roomId}).
             </span>
           </div>
           <button
             onClick={() => p2pSync.disconnect()}
-            className="text-[11px] underline font-semibold hover:text-amber-950 dark:hover:text-amber-100"
+            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-800 border shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5"
+            title="Keluar dari sesi ruang rekan dan kembali ke ruang kerja audit lokal Anda"
           >
-            Putuskan Sesi
+            <span>Kembali ke Space Saya</span>
+          </button>
+        </div>
+      )}
+
+      {/* Host Collaboration Indicator Banner */}
+      {collabState.isConnected && collabState.role === 'host' && (
+        <div className="bg-emerald-500/15 border-b border-emerald-500/30 px-6 py-2 flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 font-bold text-[10px] uppercase tracking-wider">
+              📡 Host Ruang Aktif
+            </span>
+            <span>
+              Kode Ruang: <strong>{collabState.roomId}</strong> • {collabState.connectedPeersCount} rekan terhubung
+            </span>
+          </div>
+          <button
+            onClick={() => p2pSync.disconnect()}
+            className="text-[11px] underline font-semibold hover:text-emerald-950 dark:hover:text-emerald-100"
+          >
+            Hentikan Berbagi
           </button>
         </div>
       )}
