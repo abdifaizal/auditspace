@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import {
-  X,
   Sparkles,
   Download,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
-  Loader2,
   RefreshCw,
+  X,
+  ExternalLink,
   Key,
+  Loader2,
+  DownloadCloud,
 } from 'lucide-react'
-import { openExternalUrl } from '../services/nativeSave'
+import { openExternalUrl, downloadAndInstallUpdate } from '../services/nativeSave'
 
 interface UpdateModalProps {
   isOpen: boolean
@@ -26,7 +27,7 @@ interface UpdateInfo {
 
 const GITHUB_OWNER = 'abdifaizal'
 const GITHUB_REPO = 'auditspace'
-const GITHUB_TOKEN_STORAGE_KEY = 'auditspace_github_token_v1'
+const GITHUB_TOKEN_STORAGE_KEY = 'auditspace_github_token'
 
 function formatReleaseNotes(notes: string): string {
   if (!notes) return '<p class="text-zinc-400 italic">Tidak ada catatan rilis.</p>'
@@ -66,7 +67,7 @@ function formatReleaseNotes(notes: string): string {
 export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
-  const currentVersion = '1.0.5'
+  const currentVersion = '1.0.6'
   const [status, setStatus] = useState<
     'idle' | 'checking' | 'available' | 'not-available' | 'error'
   >('idle')
@@ -74,20 +75,43 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isNoReleasesYet, setIsNoReleasesYet] = useState(false)
 
+  // In-app updater states
+  const [isInAppUpdating, setIsInAppUpdating] = useState(false)
+  const [inAppError, setInAppError] = useState<string | null>(null)
+  const [isOpeningBrowser, setIsOpeningBrowser] = useState(false)
+
   // GitHub token for private repo
   const [githubToken, setGithubToken] = useState<string>(() => {
     return localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || ''
   })
   const [showTokenInput, setShowTokenInput] = useState(false)
-  const [isOpeningDownload, setIsOpeningDownload] = useState(false)
 
   const handleSaveToken = (val: string) => {
     setGithubToken(val)
     localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, val.trim())
   }
 
-  const handleDownloadClick = async () => {
-    setIsOpeningDownload(true)
+  const cleanLatestVersion = (updateInfo?.version || '').replace(/^v+/, '')
+  const directDownloadUrl =
+    updateInfo?.downloadUrl ||
+    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/v${cleanLatestVersion}/AuditSpace_${cleanLatestVersion}_x64-setup.exe`
+
+  // In-App Seamless Update: Downloads inside app and launches installer
+  const handleInAppUpdate = async () => {
+    setIsInAppUpdating(true)
+    setInAppError(null)
+    try {
+      const filename = `AuditSpace_${cleanLatestVersion}_x64-setup.exe`
+      await downloadAndInstallUpdate(directDownloadUrl, filename)
+    } catch (err: any) {
+      setIsInAppUpdating(false)
+      setInAppError(err?.message || String(err))
+    }
+  }
+
+  // Fallback: Open in Browser
+  const handleBrowserDownload = async () => {
+    setIsOpeningBrowser(true)
     try {
       await openExternalUrl(directDownloadUrl)
     } catch (err) {
@@ -106,6 +130,22 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
       const current = currentVersion.replace(/^v+/, '')
 
       if (rawVersion && rawVersion !== current) {
+        let releaseNotes = `### Pembaruan AuditSpace v${rawVersion} Tersedia 🎉\nVersi terbaru telah dipublikasikan di repositori GitHub.`
+        try {
+          const changelogRes = await fetch(
+            `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/CHANGELOG.md?_t=${Date.now()}`
+          )
+          if (changelogRes.ok) {
+            const clText = await changelogRes.text()
+            const match = clText.match(new RegExp(`##\\s*\\[?${rawVersion}\\]?[\\s\\S]*?(?=(##\\s*\\[|\\Z))`, 'i'))
+            if (match && match[0]) {
+              releaseNotes = match[0].trim()
+            }
+          }
+        } catch {
+          // fallback to default
+        }
+
         setUpdateInfo({
           version: 'v' + rawVersion,
           releaseDate: new Date().toLocaleDateString('id-ID', {
@@ -113,7 +153,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
             month: 'long',
             year: 'numeric',
           }),
-          releaseNotes: `### Pembaruan AuditSpace v${rawVersion} Tersedia 🎉\nVersi terbaru telah dipublikasikan di repositori GitHub. Anda dapat mengunduh installer .exe langsung di bawah ini.`,
+          releaseNotes,
           downloadUrl: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/v${rawVersion}/AuditSpace_${rawVersion}_x64-setup.exe`,
         })
         setStatus('available')
@@ -132,6 +172,8 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
     setStatus('checking')
     setErrorMessage(null)
     setIsNoReleasesYet(false)
+    setIsInAppUpdating(false)
+    setInAppError(null)
 
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github.v3+json',
@@ -150,7 +192,6 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
           return
         }
         if (res.status === 403) {
-          // GitHub API Rate Limit reached: automatically fall back to raw.githubusercontent.com
           return checkViaRawFallback()
         }
         if (!res.ok) {
@@ -191,11 +232,6 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
   useEffect(() => {
     handleCheckUpdates()
   }, [])
-
-  const cleanLatestVersion = (updateInfo?.version || '').replace(/^v+/, '')
-  const directDownloadUrl =
-    updateInfo?.downloadUrl ||
-    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tag/${updateInfo?.version || 'v1.0.5'}`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in">
@@ -275,10 +311,10 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
 
           {/* Status: Update Available */}
           {status === 'available' && updateInfo && (
-            <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 space-y-3">
+            <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 space-y-3.5">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <span className="text-xs font-bold text-blue-800 dark:text-blue-300 block">
+                  <span className="text-sm font-bold text-blue-800 dark:text-blue-300 block">
                     🎉 Versi Baru Tersedia: v{cleanLatestVersion}
                   </span>
                   {updateInfo.releaseDate && (
@@ -286,34 +322,59 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
                   )}
                 </div>
 
-                {/* Direct Download Button */}
+                {/* In-App Direct Update Button */}
                 <button
                   type="button"
-                  onClick={handleDownloadClick}
-                  className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  onClick={handleInAppUpdate}
+                  disabled={isInAppUpdating}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow-md shadow-blue-500/20 transition flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-75 disabled:pointer-events-none"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>{isOpeningDownload ? 'Membuka Browser...' : 'Unduh Pembaruan (.exe)'}</span>
+                  {isInAppUpdating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Mengunduh & Memasang...</span>
+                    </>
+                  ) : (
+                    <>
+                      <DownloadCloud className="w-4 h-4" />
+                      <span>Perbarui Otomatis (In-App)</span>
+                    </>
+                  )}
                 </button>
               </div>
 
-              {isOpeningDownload && (
-                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[11px] flex items-center gap-2 animate-in fade-in">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    Browser Anda telah dibuka untuk mengunduh installer <strong>AuditSpace_{cleanLatestVersion}_x64-setup.exe</strong>. Silakan periksa jendela/tab download browser Anda.
-                  </span>
+              {/* In-App Downloading Banner */}
+              {isInAppUpdating && (
+                <div className="p-3 rounded-xl bg-blue-100/80 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-xs space-y-2 animate-in fade-in">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>Aplikasi sedang mengunduh pembaruan v{cleanLatestVersion} langsung di latar belakang...</span>
+                  </div>
+                  <div className="w-full bg-blue-200 dark:bg-blue-900 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-600 dark:bg-blue-400 h-full w-2/3 animate-pulse rounded-full" />
+                  </div>
+                  <p className="text-[10px] text-blue-700 dark:text-blue-300 opacity-90">
+                    Setelah selesai, installer akan otomatis berjalan untuk menerapkan pembaruan tanpa perlu membuka browser.
+                  </p>
+                </div>
+              )}
+
+              {/* In-App Error */}
+              {inAppError && (
+                <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-[11px] flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{inAppError}</span>
                 </div>
               )}
 
               {/* Formatted Changelog */}
               {updateInfo.releaseNotes && (
-                <div className="p-3 rounded-xl bg-white dark:bg-zinc-800/90 border border-blue-100 dark:border-zinc-700 space-y-1">
+                <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-800/90 border border-blue-100 dark:border-zinc-700 space-y-1 shadow-xs">
                   <p className="font-bold text-[10px] uppercase text-zinc-400 tracking-wider">
                     Catatan Perubahan:
                   </p>
                   <div
-                    className="max-h-48 overflow-y-auto space-y-1 pr-1 text-zinc-700 dark:text-zinc-300"
+                    className="max-h-52 overflow-y-auto space-y-1 pr-1 text-zinc-700 dark:text-zinc-300"
                     dangerouslySetInnerHTML={{
                       __html: formatReleaseNotes(updateInfo.releaseNotes),
                     }}
@@ -321,16 +382,16 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
                 </div>
               )}
 
-              {/* Direct Link fallback */}
-              <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-1">
-                <span>File installer:</span>
+              {/* Browser Download Fallback Link */}
+              <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-1 border-t border-blue-100 dark:border-zinc-800">
+                <span>Pilihan lain:</span>
                 <button
                   type="button"
-                  onClick={handleDownloadClick}
-                  className="text-blue-600 dark:text-blue-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 text-left"
+                  onClick={handleBrowserDownload}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
                 >
-                  <span>AuditSpace_{cleanLatestVersion}_x64-setup.exe</span>
-                  <ExternalLink className="w-3 h-3" />
+                  <Download className="w-3 h-3" />
+                  <span>{isOpeningBrowser ? 'Membuka Browser...' : 'Unduh manual via browser (.exe)'}</span>
                 </button>
               </div>
             </div>
@@ -349,54 +410,49 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
             </div>
           )}
 
-          {/* Private Repository Token Option (Collapsible) */}
-          <div className="pt-1">
+          {/* Optional GitHub Token */}
+          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
             <button
               onClick={() => setShowTokenInput(!showTokenInput)}
-              className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1"
+              className="text-[11px] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center gap-1.5 transition"
             >
               <Key className="w-3 h-3 text-amber-500" />
               <span>Opsi Tambahan: Token Repository Private (Opsional)</span>
             </button>
-
             {showTokenInput && (
-              <div className="mt-2 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700 space-y-2 animate-in fade-in">
-                <label className="block text-[10px] uppercase font-bold text-zinc-500">
-                  GitHub Personal Access Token (Hanya jika repository di-set Private):
-                </label>
+              <div className="mt-2.5 space-y-2 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 animate-in fade-in">
+                <p className="text-[10px] text-zinc-500 leading-relaxed">
+                  Jika repository diset ke status Private, masukkan Personal Access Token (PAT)
+                  GitHub dengan scope <code>repo</code> untuk mengizinkan pengecekan rilis.
+                </p>
                 <input
                   type="password"
                   value={githubToken}
                   onChange={(e) => handleSaveToken(e.target.value)}
                   placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100"
+                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100"
                 />
-                <p className="text-[10px] text-zinc-400">
-                  Jika repository Anda <strong>Public</strong>, biarkan kolom ini kosong.
-                </p>
               </div>
             )}
-          </div>
-
-          {/* Link to GitHub Releases Page */}
-          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px]">
-            <span className="text-zinc-400">Lihat rilis di browser:</span>
-            <button
-              type="button"
-              onClick={() => openExternalUrl(`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases`)}
-              className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold cursor-pointer bg-transparent border-none p-0"
-            >
-              <span>github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases</span>
-              <ExternalLink className="w-3 h-3" />
-            </button>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-end bg-zinc-50/50 dark:bg-zinc-900/50">
+        <div className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 flex items-center justify-between text-[11px] text-zinc-500">
+          <span>
+            Lihat rilis di browser:{' '}
+            <button
+              type="button"
+              onClick={() => openExternalUrl(`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases`)}
+              className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
+            >
+              <span>github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases</span>
+              <ExternalLink className="w-3 h-3" />
+            </button>
+          </span>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl"
+            className="px-4 py-1.5 text-xs font-semibold rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition"
           >
             Tutup
           </button>

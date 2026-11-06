@@ -49,10 +49,57 @@ fn open_in_browser(url: String) -> Result<(), String> {
   }
 }
 
+#[tauri::command]
+fn download_and_install_update(url: String, filename: String) -> Result<(), String> {
+  let mut temp_path = std::env::temp_dir();
+  let safe_name = if filename.is_empty() {
+    "AuditSpace_Setup_Update.exe".to_string()
+  } else {
+    filename
+  };
+  temp_path.push(&safe_name);
+  let dest_str = temp_path.to_string_lossy().to_string();
+
+  #[cfg(target_os = "windows")]
+  {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    const DETACHED_PROCESS: u32 = 0x00000008;
+
+    let download_cmd = format!(
+      "curl.exe -f -L --retry 3 --retry-delay 2 -o \"{}\" \"{}\"",
+      dest_str, url
+    );
+
+    let status = std::process::Command::new("cmd")
+      .args(["/c", &download_cmd])
+      .creation_flags(CREATE_NO_WINDOW)
+      .status()
+      .map_err(|e| format!("Gagal mengunduh installer pembaruan: {}", e))?;
+
+    if !status.success() {
+      return Err("Gagal mengunduh berkas installer pembaruan.".to_string());
+    }
+
+    std::process::Command::new("cmd")
+      .args(["/c", "start", "", &dest_str])
+      .creation_flags(DETACHED_PROCESS)
+      .spawn()
+      .map_err(|e| format!("Gagal menjalankan berkas installer: {}", e))?;
+
+    std::process::exit(0);
+  }
+
+  #[cfg(not(target_os = "windows"))]
+  {
+    Ok(())
+  }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![save_file_to_disk, open_in_browser])
+    .invoke_handler(tauri::generate_handler![save_file_to_disk, open_in_browser, download_and_install_update])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

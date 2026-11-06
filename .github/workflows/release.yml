@@ -48,26 +48,10 @@ jobs:
             🎉 Rilis resmi pembaruan fitur **AuditSpace ${{ github.ref_name }}**:
 
             ### ✨ Apa yang Baru di Versi Ini:
-            1. **Bullet List, Numbering & Checkbox pada Catatan Tempel**:
-               - Catatan Tempel kini otomatis merapikan daftar bertitik (bullet •), penomoran urut angka (1.), checkbox to-do ([ ]), dan pemformatan tebal (**bold**).
-            2. **Penyisipan Gambar & Screenshot di Antara Teks Catatan**:
-               - Menyisipkan bukti gambar/screenshot di dalam catatan via tombol *Sisipkan Gambar* atau langsung tempel gambar (**Ctrl+V**) dari clipboard.
-               - Dilengkapi tab *Tulis* & *Pratinjau*, serta fitur perbesar gambar (*Lightbox Zoom*).
-            3. **Tata Letak Header Responsif & Dukungan Split-Screen Windows (min-width 960px)**:
-               - Saat jendela dikecilkan atau dibagi 50:50 (split-screen), tombol Space, View Switcher, P2P, Alat, Tambah, Export, Import, dan Dark Mode beradaptasi secara cerdas sehingga 100% tetap terlihat dan tidak ada yang terpotong.
-            4. **Segmented Switcher & Pemisah Kontrol Tampilan**:
-               - Switcher mode tampilan ("Infinite Canvas" vs "Modular Kanban") diperbarui menjadi kontrol tersegmentasi berkontras tinggi dengan garis pemisah vertikal (*divider*).
-            5. **Tombol Geser Kanban Jelas & Interaktif**:
-               - Tombol navigasi scroll Kanban diubah menjadi 2 tombol aksi mandiri berborder nyata: `[ ‹ Geser Kiri ]` dan `[ Geser Kanan › ]` dengan ikon chevron biru dan efek hover aktif.
-            6. **Perbaikan Penuh Mesin Dark Mode**:
-               - Mendukung Tailwind v4 dark-variant, otomatis mendeteksi tema Windows, menyimpan preferensi tema di `localStorage`, dan palet warna Catatan Tempel (*Sticky Notes*) yang nyaman di mata pada mode gelap.
-            7. **Sinkronisasi Logo Resmi Brand AuditSpace**:
-               - Logo di header aplikasi dan kop surat kertas kerja audit diseragamkan dengan ikon aplikasi resmi.
-            8. **Native Browser Launcher & Unduh Pembaruan**:
-               - Tombol Unduh Pembaruan dan tautan installer di Auto-Updater langsung membuka browser bawaan Windows via process launcher Rust.
-            9. **Native Save File Dialog & Export Fix**:
-               - Tombol Export dan unduh berkas memanggil dialog bawaan Windows "Save As" secara andal melalui Rust engine.
-            10. **Ikon Installer EXE Konsisten**:
-               - Berkas installer setup (.exe) menggunakan ikon kustom resmi AuditSpace yang sama persis dengan ikon aplikasi terpasang.
+            1. **In-App Auto-Updater (Download & Install Tanpa Browser)**:
+               - Pembaruan aplikasi kini dapat diunduh dan dipasang langsung di dalam dialog aplikasi tanpa harus membuka browser atau mencari berkas installer di folder Downloads.
+            2. **Pembersihan & Perapian Catatan Rilis**:
+               - Catatan rilis di GitHub Releases kini modular dan spesifik per versi tanpa duplikasi dari rilis-rilis sebelumnya.
+               - Dokumentasi resmi riwayat perubahan kini tersedia di berkas `CHANGELOG.md`.
           releaseDraft: false
           prerelease: false

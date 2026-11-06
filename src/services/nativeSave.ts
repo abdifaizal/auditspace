@@ -93,3 +93,22 @@ export async function openExternalUrl(url: string): Promise<void> {
 
   window.open(formattedUrl, '_blank', 'noopener,noreferrer')
 }
+
+/**
+ * In-App update installer:
+ * Downloads the update binary directly in the background and launches it without opening an external browser.
+ */
+export async function downloadAndInstallUpdate(url: string, filename: string): Promise<void> {
+  const isTauri =
+    typeof window !== 'undefined' &&
+    ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
+
+  if (isTauri) {
+    const { invoke } = await import('@tauri-apps/api/core')
+    await invoke('download_and_install_update', { url, filename })
+    return
+  }
+
+  // Fallback in web browser mode
+  window.open(url, '_blank')
+}
