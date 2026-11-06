@@ -4,6 +4,17 @@ Semua catatan pembaruan dan perubahan resmi pada aplikasi **AuditSpace** didokum
 
 ---
 
+## [1.0.8] — 2026-11-06
+### 🛠️ Perbaikan Bug
+- **Perbaikan Mesin In-App Auto-Updater (Download Langsung)**:
+  - Memperbaiki parsing pemanggilan proses `curl.exe` asli (menghilangkan wrapper `cmd /c` yang memicu pemotongan tanda kutip URL `Malformed input to a URL function`).
+  - Menambahkan *auto-fallback* unduhan via PowerShell `System.Net.WebClient` jika proses `curl` mengalami kendala jaringan atau *handshake timeout*.
+  - Menambahkan *retry parameter* (`--retry 5 --connect-timeout 30`) untuk menoleransi latensi jaringan.
+  - Memperbaiki peluncuran installer `.exe` hasil unduhan secara mandiri (*detached process*).
+  - Mengembalikan rincian pesan galat yang sesungguhnya ke antarmuka aplikasi.
+
+---
+
 ## [1.0.7] — 2026-11-06
 ### ✨ Ditambahkan
 - **Mode Baca & Tampilan Besar Transkrip Diskusi (Meeting Reader & Viewer Modal)**:

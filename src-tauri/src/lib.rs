@@ -66,23 +66,68 @@ fn download_and_install_update(url: String, filename: String) -> Result<(), Stri
     const CREATE_NO_WINDOW: u32 = 0x08000000;
     const DETACHED_PROCESS: u32 = 0x00000008;
 
-    let download_cmd = format!(
-      "curl.exe -f -L --retry 3 --retry-delay 2 -o \"{}\" \"{}\"",
-      dest_str, url
-    );
-
-    let status = std::process::Command::new("cmd")
-      .args(["/c", &download_cmd])
+    // 1. Try downloading via curl.exe directly with robust retry and connect timeout
+    let curl_res = std::process::Command::new("curl.exe")
+      .args([
+        "-f",
+        "-L",
+        "-s",
+        "-S",
+        "--retry", "5",
+        "--retry-delay", "2",
+        "--connect-timeout", "30",
+        "-o", &dest_str,
+        &url,
+      ])
       .creation_flags(CREATE_NO_WINDOW)
-      .status()
-      .map_err(|e| format!("Gagal mengunduh installer pembaruan: {}", e))?;
+      .output();
 
-    if !status.success() {
-      return Err("Gagal mengunduh berkas installer pembaruan.".to_string());
+    let mut download_ok = false;
+    let mut last_error = String::new();
+
+    match curl_res {
+      Ok(out) if out.status.success() => {
+        download_ok = true;
+      }
+      Ok(out) => {
+        last_error = String::from_utf8_lossy(&out.stderr).to_string();
+      }
+      Err(e) => {
+        last_error = e.to_string();
+      }
     }
 
-    std::process::Command::new("cmd")
-      .args(["/c", "start", "", &dest_str])
+    // 2. Fallback to PowerShell if curl failed
+    if !download_ok {
+      let ps_script = format!(
+        "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{}', '{}')",
+        url, dest_str
+      );
+      let ps_res = std::process::Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &ps_script])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output();
+
+      match ps_res {
+        Ok(out) if out.status.success() => {
+          download_ok = true;
+        }
+        Ok(out) => {
+          let ps_err = String::from_utf8_lossy(&out.stderr).to_string();
+          last_error = format!("curl: {} | powershell: {}", last_error.trim(), ps_err.trim());
+        }
+        Err(e) => {
+          last_error = format!("curl: {} | powershell error: {}", last_error.trim(), e);
+        }
+      }
+    }
+
+    if !download_ok {
+      return Err(format!("Gagal mengunduh berkas installer: {}", last_error.trim()));
+    }
+
+    // Launch downloaded installer directly in detached mode
+    std::process::Command::new(&dest_str)
       .creation_flags(DETACHED_PROCESS)
       .spawn()
       .map_err(|e| format!("Gagal menjalankan berkas installer: {}", e))?;

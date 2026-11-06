@@ -67,7 +67,7 @@ function formatReleaseNotes(notes: string): string {
 export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
-  const currentVersion = '1.0.7'
+  const currentVersion = '1.0.8'
   const [status, setStatus] = useState<
     'idle' | 'checking' | 'available' | 'not-available' | 'error'
   >('idle')
@@ -92,9 +92,11 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
   }
 
   const cleanLatestVersion = (updateInfo?.version || '').replace(/^v+/, '')
+  const computedFallbackUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/v${cleanLatestVersion}/AuditSpace_${cleanLatestVersion}_x64-setup.exe`
   const directDownloadUrl =
-    updateInfo?.downloadUrl ||
-    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/v${cleanLatestVersion}/AuditSpace_${cleanLatestVersion}_x64-setup.exe`
+    updateInfo?.downloadUrl && updateInfo.downloadUrl.toLowerCase().endsWith('.exe')
+      ? updateInfo.downloadUrl
+      : computedFallbackUrl
 
   // In-App Seamless Update: Downloads inside app and launches installer
   const handleInAppUpdate = async () => {
@@ -205,6 +207,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
           const exeAsset = release.assets?.find((a: any) =>
             a.name?.toLowerCase().endsWith('.exe')
           )
+          const fallbackExe = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/${release.tag_name}/AuditSpace_${latestTag}_x64-setup.exe`
           setUpdateInfo({
             version: release.tag_name,
             releaseDate: release.published_at
@@ -215,7 +218,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
                 })
               : undefined,
             releaseNotes: release.body || 'Tidak ada catatan rilis.',
-            downloadUrl: exeAsset?.browser_download_url || release.html_url,
+            downloadUrl: exeAsset?.browser_download_url || fallbackExe,
           })
           setStatus('available')
         } else {
