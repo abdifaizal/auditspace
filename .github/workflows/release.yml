@@ -35,6 +35,19 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Extract Release Notes from CHANGELOG.md
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart("v")
+          $content = Get-Content -Raw CHANGELOG.md
+          $pattern = "(?s)##\s*\[?" + [regex]::Escape($tag) + "\]?[^\n]*\n(.*?)(?=\n##|\Z)"
+          if ($content -match $pattern) {
+            $notes = "## AuditSpace v$tag (Rust / Tauri 2.0 Engine)`n`n" + $matches[1].Trim()
+          } else {
+            $notes = "## AuditSpace v$tag`n`nPembaruan fitur dan stabilitas AuditSpace."
+          }
+          $notes | Out-File -FilePath release_notes.md -Encoding utf8
+
       - name: Build and Publish Tauri Application
         uses: tauri-apps/tauri-action@v0
         env:
@@ -42,16 +55,6 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'AuditSpace ${{ github.ref_name }}'
-          releaseBody: |
-            ## AuditSpace ${{ github.ref_name }} (Rust / Tauri 2.0 Engine)
-
-            🎉 Rilis resmi pembaruan fitur **AuditSpace ${{ github.ref_name }}**:
-
-            ### ✨ Apa yang Baru di Versi Ini:
-            1. **In-App Auto-Updater (Download & Install Tanpa Browser)**:
-               - Pembaruan aplikasi kini dapat diunduh dan dipasang langsung di dalam dialog aplikasi tanpa harus membuka browser atau mencari berkas installer di folder Downloads.
-            2. **Pembersihan & Perapian Catatan Rilis**:
-               - Catatan rilis di GitHub Releases kini modular dan spesifik per versi tanpa duplikasi dari rilis-rilis sebelumnya.
-               - Dokumentasi resmi riwayat perubahan kini tersedia di berkas `CHANGELOG.md`.
+          releaseBodyFile: 'release_notes.md'
           releaseDraft: false
           prerelease: false

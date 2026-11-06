@@ -45,8 +45,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [editedTranscript, setEditedTranscript] = useState(meeting.transcript || '')
   const [copied, setCopied] = useState(false)
-  const [fontSizeLevel, setFontSizeLevel] = useState<number>(1) // 0: 12px, 1: 13px (Fokus/Default), 2: 14px, 3: 16px
-  const [isFullWidth, setIsFullWidth] = useState(false) // Toggle between max-w-3xl (fokus) and full width
+  const [fontSizeLevel, setFontSizeLevel] = useState<number>(1) // 0: 12px, 1: 13px (Default), 2: 14px, 3: 16px
 
   const fontSizeLevels = [
     { label: '12px', bodyClass: 'text-xs leading-normal' },
@@ -78,7 +77,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
   const renderFormattedLine = (line: string, idx: number) => {
     const trimmed = line.trim()
     if (!trimmed) {
-      return <div key={idx} className="h-1.5" />
+      return <div key={idx} className="h-2" />
     }
 
     // Horizontal divider
@@ -111,16 +110,16 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
       return (
         <div
           key={idx}
-          className={`flex items-start gap-2 pt-2.5 pb-0.5 mt-1 border-t first:border-t-0 border-zinc-100 dark:border-zinc-800/80 ${
-            isNested ? 'ml-5 pl-2' : ''
+          className={`flex items-start gap-2.5 pt-3 pb-1 mt-1 border-t first:border-t-0 border-zinc-100 dark:border-zinc-800/80 ${
+            isNested ? 'ml-6 pl-2' : ''
           }`}
         >
           <span className="font-bold text-blue-600 dark:text-blue-400 shrink-0 select-none min-w-[20px]">
             {numberMatch[1]}
           </span>
-          <span className="font-semibold text-zinc-900 dark:text-zinc-100 flex-1 leading-snug">
+          <div className="flex-1 font-semibold text-zinc-900 dark:text-zinc-100 text-justify [text-align:justify] [text-justify:inter-word] leading-snug break-words">
             {formatInline(numberMatch[2])}
-          </span>
+          </div>
         </div>
       )
     }
@@ -131,14 +130,14 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
       return (
         <div
           key={idx}
-          className={`flex items-start gap-2 py-0.5 ${
-            isNested ? 'ml-5 pl-2 text-zinc-700 dark:text-zinc-300' : 'text-zinc-800 dark:text-zinc-200'
+          className={`flex items-start gap-2.5 py-1 ${
+            isNested ? 'ml-6 pl-2 text-zinc-700 dark:text-zinc-300' : 'text-zinc-800 dark:text-zinc-200'
           }`}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500/80 shrink-0 mt-1.5 select-none" />
-          <span className="flex-1 leading-normal">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500/80 shrink-0 mt-2 select-none" />
+          <div className="flex-1 text-justify [text-align:justify] [text-justify:inter-word] leading-relaxed break-words">
             {formatInline(bulletMatch[1])}
-          </span>
+          </div>
         </div>
       )
     }
@@ -148,9 +147,9 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
     if (checkMatch) {
       const isChecked = checkMatch[1].toLowerCase() === 'x'
       return (
-        <div key={idx} className={`flex items-start gap-2 py-0.5 ${isNested ? 'ml-5 pl-2' : ''}`}>
+        <div key={idx} className={`flex items-start gap-2.5 py-1 ${isNested ? 'ml-6 pl-2' : ''}`}>
           <span
-            className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 mt-0.5 ${
+            className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 mt-1 ${
               isChecked
                 ? 'bg-blue-600 border-blue-600 text-white'
                 : 'border-zinc-300 dark:border-zinc-600'
@@ -158,15 +157,15 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
           >
             {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
           </span>
-          <span
-            className={`flex-1 leading-normal ${
+          <div
+            className={`flex-1 text-justify [text-align:justify] [text-justify:inter-word] leading-relaxed break-words ${
               isChecked
                 ? 'line-through text-zinc-400 dark:text-zinc-500'
                 : 'text-zinc-800 dark:text-zinc-200'
             }`}
           >
             {formatInline(checkMatch[2])}
-          </span>
+          </div>
         </div>
       )
     }
@@ -179,7 +178,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
         return (
           <h3
             key={idx}
-            className="text-base font-bold text-zinc-900 dark:text-zinc-100 mt-3 mb-1 border-b border-zinc-200 dark:border-zinc-800 pb-1"
+            className="text-base font-bold text-zinc-900 dark:text-zinc-100 mt-3.5 mb-1.5 border-b border-zinc-200 dark:border-zinc-800 pb-1"
           >
             {formatInline(text)}
           </h3>
@@ -201,8 +200,8 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
       return (
         <p
           key={idx}
-          className={`font-semibold text-zinc-900 dark:text-zinc-100 mt-2 mb-0.5 ${
-            isNested ? 'ml-5 pl-2' : ''
+          className={`font-semibold text-zinc-900 dark:text-zinc-100 mt-2.5 mb-1 text-justify [text-align:justify] [text-justify:inter-word] leading-relaxed break-words ${
+            isNested ? 'ml-6 pl-2' : ''
           }`}
         >
           {formatInline(trimmed)}
@@ -213,8 +212,8 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
     return (
       <p
         key={idx}
-        className={`text-zinc-800 dark:text-zinc-200 py-0.5 leading-normal ${
-          isNested ? 'ml-5 pl-2 text-zinc-700 dark:text-zinc-300' : ''
+        className={`text-zinc-800 dark:text-zinc-200 py-1 text-justify [text-align:justify] [text-justify:inter-word] leading-relaxed break-words ${
+          isNested ? 'ml-6 pl-2 text-zinc-700 dark:text-zinc-300' : ''
         }`}
       >
         {formatInline(trimmed)}
@@ -269,7 +268,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
 
           {/* Action Toolbar */}
           <div className="flex items-center gap-2 self-end sm:self-center">
-            {/* Font Zoom & Focus Width Controls */}
+            {/* Font Zoom Controls */}
             {!isEditing && (
               <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 border border-zinc-200 dark:border-zinc-700">
                 <button
@@ -292,19 +291,6 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
                   title="Perbesar Ukuran Teks (A+)"
                 >
                   A+
-                </button>
-                <div className="w-[1px] h-3 bg-zinc-300 dark:bg-zinc-700 mx-1" />
-                <button
-                  type="button"
-                  onClick={() => setIsFullWidth(!isFullWidth)}
-                  className={`p-1 rounded text-xs transition ${
-                    isFullWidth
-                      ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300'
-                      : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700'
-                  }`}
-                  title={isFullWidth ? 'Beralih ke Lebar Fokus Dokumen (Rekomendasi)' : 'Beralih ke Layar Penuh'}
-                >
-                  {isFullWidth ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
                 </button>
               </div>
             )}
@@ -401,7 +387,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
             </div>
 
             {isEditing ? (
-              <div className={`space-y-3 h-[calc(100%-40px)] flex flex-col ${isFullWidth ? 'w-full' : 'max-w-3xl mx-auto'}`}>
+              <div className="space-y-3 h-[calc(100%-40px)] flex flex-col w-full">
                 <textarea
                   value={editedTranscript}
                   onChange={(e) => setEditedTranscript(e.target.value)}
@@ -429,7 +415,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className={`${isFullWidth ? 'w-full' : 'max-w-3xl mx-auto'} transition-all duration-150`}>
+              <div className="w-full">
                 <div className={`space-y-0.5 font-sans ${fontSizeLevels[fontSizeLevel].bodyClass}`}>
                   {meeting.transcript ? (
                     meeting.transcript

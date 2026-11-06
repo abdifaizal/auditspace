@@ -4,6 +4,19 @@ Semua catatan pembaruan dan perubahan resmi pada aplikasi **AuditSpace** didokum
 
 ---
 
+## [1.0.10] — 2026-11-06
+### 🎨 Tipografi & Perbaikan Antarmuka
+- **Rata Kanan-Kiri & Perataan Paragraf Bullet/Numbering (*Justified Hanging Indent*)**:
+  - Seluruh baris teks dalam paragraf bernomor dan bullet otomatis lurus rapi ke bawah (*hanging indent*) dengan perataan rata kanan-kiri (*justified text*). Baris lanjutan selalu sejajar dengan kata pertama tanpa terpotong atau melenceng.
+- **Pembersihan Ruang Kosong Samping Transkrip**:
+  - Menghilangkan ruang kosong artifisial di sisi kanan catatan. Konten transkrip kini mengisi lebar panel secara penuh (*full-width*) hingga batas panel samping dengan proporsi padding yang rapi.
+- **Sinkronisasi Dinamis Versi pada Title Bar Windows**:
+  - Mengonfigurasi sinkronisasi native judul jendela OS (*title bar*) agar otomatis mengikuti versi aplikasi saat ini (`AuditSpace v1.0.10`).
+- **Otomatisasi Catatan Rilis GitHub Releases**:
+  - Memperbaiki pipeline GitHub Actions (`release.yml`) agar mengekstrak rincian perubahan spesifik dari `CHANGELOG.md` per versi tag secara dinamis (menghapus duplikasi teks rilis lama).
+
+---
+
 ## [1.0.9] — 2026-11-06
 ### 🎨 Tipografi & Peningkatan Kenyamanan Baca
 - **Optimalisasi Mode Baca Transkrip Diskusi (Fokus & Ergonomis)**:

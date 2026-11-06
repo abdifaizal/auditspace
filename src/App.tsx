@@ -125,6 +125,21 @@ export function App() {
     }
   }, [])
 
+  // Sync window & document title dynamically with version
+  useEffect(() => {
+    const isTauri =
+      typeof window !== 'undefined' &&
+      ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
+    if (isTauri) {
+      import('@tauri-apps/api/window')
+        .then(({ getCurrentWindow }) => {
+          getCurrentWindow().setTitle('AuditSpace v1.0.10').catch(() => {})
+        })
+        .catch(() => {})
+    }
+    document.title = 'AuditSpace v1.0.10'
+  }, [])
+
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
 
   // Current active workspace

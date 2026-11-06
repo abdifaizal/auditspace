@@ -45,7 +45,9 @@ export const StickyContentRenderer: React.FC<StickyContentRendererProps> = ({
           {currentBullets.map((item, idx) => (
             <li key={idx} className="flex items-start gap-1.5 leading-relaxed">
               <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0 mt-1.5 opacity-70" />
-              <span className="flex-1">{renderFormattedInline(item)}</span>
+              <div className="flex-1 text-justify [text-align:justify] [text-justify:inter-word] break-words">
+                {renderFormattedInline(item)}
+              </div>
             </li>
           ))}
         </ul>
@@ -63,7 +65,9 @@ export const StickyContentRenderer: React.FC<StickyContentRendererProps> = ({
               <span className="font-bold text-[10px] min-w-4 text-right opacity-80 shrink-0 select-none">
                 {item.num}.
               </span>
-              <span className="flex-1">{renderFormattedInline(item.text)}</span>
+              <div className="flex-1 text-justify [text-align:justify] [text-justify:inter-word] break-words">
+                {renderFormattedInline(item.text)}
+              </div>
             </li>
           ))}
         </ol>
