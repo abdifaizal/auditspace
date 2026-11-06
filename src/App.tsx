@@ -157,7 +157,7 @@ export function App() {
   // Synchronize document.title to display app version on the native title bar
   useEffect(() => {
     const spaceName = activeSpace?.projectMeta?.name || 'Workspace'
-    document.title = `AuditSpace v1.0.4 - ${spaceName}`
+    document.title = `AuditSpace v1.0.5 - ${spaceName}`
   }, [activeSpace?.projectMeta?.name])
 
   // Helper to update active space

@@ -48,27 +48,26 @@ jobs:
             🎉 Rilis resmi pembaruan fitur **AuditSpace ${{ github.ref_name }}**:
 
             ### ✨ Apa yang Baru di Versi Ini:
-            1. **Tata Letak Header Responsif & Dukungan Split-Screen Windows (min-width 960px)**:
+            1. **Bullet List, Numbering & Checkbox pada Catatan Tempel**:
+               - Catatan Tempel kini otomatis merapikan daftar bertitik (bullet •), penomoran urut angka (1.), checkbox to-do ([ ]), dan pemformatan tebal (**bold**).
+            2. **Penyisipan Gambar & Screenshot di Antara Teks Catatan**:
+               - Menyisipkan bukti gambar/screenshot di dalam catatan via tombol *Sisipkan Gambar* atau langsung tempel gambar (**Ctrl+V**) dari clipboard.
+               - Dilengkapi tab *Tulis* & *Pratinjau*, serta fitur perbesar gambar (*Lightbox Zoom*).
+            3. **Tata Letak Header Responsif & Dukungan Split-Screen Windows (min-width 960px)**:
                - Saat jendela dikecilkan atau dibagi 50:50 (split-screen), tombol Space, View Switcher, P2P, Alat, Tambah, Export, Import, dan Dark Mode beradaptasi secara cerdas sehingga 100% tetap terlihat dan tidak ada yang terpotong.
-            2. **Segmented Switcher & Pemisah Kontrol Tampilan**:
+            4. **Segmented Switcher & Pemisah Kontrol Tampilan**:
                - Switcher mode tampilan ("Infinite Canvas" vs "Modular Kanban") diperbarui menjadi kontrol tersegmentasi berkontras tinggi dengan garis pemisah vertikal (*divider*).
-            3. **Tombol Geser Kanban Jelas & Interaktif**:
+            5. **Tombol Geser Kanban Jelas & Interaktif**:
                - Tombol navigasi scroll Kanban diubah menjadi 2 tombol aksi mandiri berborder nyata: `[ ‹ Geser Kiri ]` dan `[ Geser Kanan › ]` dengan ikon chevron biru dan efek hover aktif.
-            4. **Perbaikan Penuh Mesin Dark Mode**:
+            6. **Perbaikan Penuh Mesin Dark Mode**:
                - Mendukung Tailwind v4 dark-variant, otomatis mendeteksi tema Windows, menyimpan preferensi tema di `localStorage`, dan palet warna Catatan Tempel (*Sticky Notes*) yang nyaman di mata pada mode gelap.
-            5. **Sinkronisasi Logo Resmi Brand AuditSpace**:
+            7. **Sinkronisasi Logo Resmi Brand AuditSpace**:
                - Logo di header aplikasi dan kop surat kertas kerja audit diseragamkan dengan ikon aplikasi resmi.
-            6. **Native Browser Launcher & Unduh Pembaruan**:
+            8. **Native Browser Launcher & Unduh Pembaruan**:
                - Tombol Unduh Pembaruan dan tautan installer di Auto-Updater langsung membuka browser bawaan Windows via process launcher Rust.
-            7. **Native Save File Dialog & Export Fix**:
+            9. **Native Save File Dialog & Export Fix**:
                - Tombol Export dan unduh berkas memanggil dialog bawaan Windows "Save As" secara andal melalui Rust engine.
-            8. **Ikon Installer EXE Konsisten**:
+            10. **Ikon Installer EXE Konsisten**:
                - Berkas installer setup (.exe) menggunakan ikon kustom resmi AuditSpace yang sama persis dengan ikon aplikasi terpasang.
-            9. **Solusi 403 Rate-Limit pada Auto-Updater**:
-               - Mengatasi batas kuota GitHub API 403 dengan fallback otomatis ke jaringan CDN mentah.
-            10. **Dukungan Berkas Lengkap pada Agenda**:
-               - Mendukung multi-lampiran: Excel daftar hadir, transkrip teks .txt/.log, dokumen Word, dan surat undangan PDF.
-            11. **Edit Tautan & Pemisahan Tombol**:
-               - Tautan di Materi Auditee kini dapat diedit dengan tombol pensil ✏️ dan tombol Tambah URL telah dipisahkan posisinya.
           releaseDraft: false
           prerelease: false

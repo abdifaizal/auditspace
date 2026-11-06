@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import { formatBytes, formatDateString } from '../services/storage'
 import { openExternalUrl } from '../services/nativeSave'
+import { StickyContentRenderer } from './StickyContentRenderer'
 
 interface CanvasViewProps {
   meetings: MeetingCard[]
@@ -683,7 +684,7 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
               key={s.id}
               style={{ transform: `translate(${s.x}px, ${s.y}px)` }}
               onMouseDown={(e) => startDragCard(e, 'sticky', s.id, s.x, s.y)}
-              className={`absolute w-64 p-4 rounded-2xl border shadow-lg cursor-grab active:cursor-grabbing backdrop-blur-sm select-none ${colorStyles}`}
+              className={`absolute w-64 sm:w-72 p-4 rounded-2xl border shadow-lg cursor-grab active:cursor-grabbing backdrop-blur-sm select-none ${colorStyles}`}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">
@@ -699,9 +700,7 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
                   <Edit3 className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <p className="text-xs leading-relaxed whitespace-pre-line font-medium font-sans">
-                {s.content}
-              </p>
+              <StickyContentRenderer content={s.content} />
             </div>
           )
         })}

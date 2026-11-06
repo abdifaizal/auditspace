@@ -40,6 +40,7 @@ import { formatBytes, formatDateString } from '../services/storage'
 import { openExternalUrl } from '../services/nativeSave'
 import { CustomColumnModal } from './CustomColumnModal'
 import { CustomCardModal } from './CustomCardModal'
+import { StickyContentRenderer } from './StickyContentRenderer'
 
 interface KanbanViewProps {
   meetings: MeetingCard[]
@@ -332,9 +333,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                         )}
                       </div>
                     </div>
-                    <p className="text-xs leading-relaxed whitespace-pre-line font-medium font-sans">
-                      {s.content}
-                    </p>
+                    <StickyContentRenderer content={s.content} />
                   </div>
                 )
               })}
