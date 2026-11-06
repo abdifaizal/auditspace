@@ -36,17 +36,21 @@ jobs:
         run: npm run build
 
       - name: Extract Release Notes from CHANGELOG.md
+        id: changelog
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}".TrimStart("v")
-          $content = Get-Content -Raw CHANGELOG.md
-          $pattern = "(?s)##\s*\[?" + [regex]::Escape($tag) + "\]?[^\n]*\n(.*?)(?=\n##|\Z)"
+          $raw = Get-Content -Raw CHANGELOG.md
+          $content = $raw -replace "\r\n", "`n"
+          $pattern = "(?s)##\s*\[?" + [regex]::Escape($tag) + "\]?[^\n]*\n(.*?)(?=\n---\s*\n|\n##|\Z)"
           if ($content -match $pattern) {
             $notes = "## AuditSpace v$tag (Rust / Tauri 2.0 Engine)`n`n" + $matches[1].Trim()
           } else {
             $notes = "## AuditSpace v$tag`n`nPembaruan fitur dan stabilitas AuditSpace."
           }
           $notes | Out-File -FilePath release_notes.md -Encoding utf8
+          $delimiter = [guid]::NewGuid().ToString()
+          "notes<<$delimiter`n$notes`n$delimiter" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Build and Publish Tauri Application
         uses: tauri-apps/tauri-action@v0
@@ -55,6 +59,16 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'AuditSpace ${{ github.ref_name }}'
-          releaseBodyFile: 'release_notes.md'
+          releaseBody: ${{ steps.changelog.outputs.notes }}
           releaseDraft: false
           prerelease: false
+
+      - name: Ensure GitHub Release Body is Complete
+        if: always()
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if (Test-Path release_notes.md) {
+            gh release edit ${{ github.ref_name }} --notes-file release_notes.md
+          }

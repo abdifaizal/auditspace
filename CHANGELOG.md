@@ -4,6 +4,16 @@ Semua catatan pembaruan dan perubahan resmi pada aplikasi **AuditSpace** didokum
 
 ---
 
+## [1.0.13] — 2026-11-06
+### 🚀 Otomasi Catatan Rilis & Penyempurnaan Tampilan GitHub Releases
+- **Perbaikan Pemotongan Teks Catatan Rilis (*Full Release Notes Guarantee*)**:
+  - Memperbaiki parser pemotongan baris CRLF Windows pada pipeline GitHub Actions (`release.yml`) agar catatan rilis per versi diekstrak secara utuh dari `CHANGELOG.md`.
+  - Mengintegrasikan CLI `gh release edit` secara otomatis dengan parameter `--notes-file` sehingga seluruh rincian pembaruan, poin perubahan, dan daftar fitur tampil rapi, lengkap, dan berformat Markdown penuh di halaman GitHub Releases tanpa terpotong.
+- **Penyempurnaan Sinkronisasi Multi-Space v1.0.13**:
+  - Memastikan integrasi transkrip utuh (867 kata) dan berkas PDF lampiran termuat secara konsisten pada seluruh sesi baru maupun yang sedang berjalan.
+
+---
+
 ## [1.0.12] — 2026-11-06
 ### 🛡️ Restorasi Utuh Transkrip (867 Kata) & Berkas PDF Asli
 - **Pemulihan Penuh 100% Transkrip Rapat Diskusi DRB (8 Poin Utama, 867 Kata)**:

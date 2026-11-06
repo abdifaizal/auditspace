@@ -194,11 +194,11 @@ export function App() {
     if (isTauri) {
       import('@tauri-apps/api/window')
         .then(({ getCurrentWindow }) => {
-          getCurrentWindow().setTitle('AuditSpace v1.0.12').catch(() => {})
+          getCurrentWindow().setTitle('AuditSpace v1.0.13').catch(() => {})
         })
         .catch(() => {})
     }
-    document.title = 'AuditSpace v1.0.12'
+    document.title = 'AuditSpace v1.0.13'
   }, [])
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
