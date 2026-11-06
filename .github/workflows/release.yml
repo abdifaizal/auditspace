@@ -48,19 +48,25 @@ jobs:
             🎉 Rilis resmi pembaruan fitur **AuditSpace ${{ github.ref_name }}**:
 
             ### ✨ Apa yang Baru di Versi Ini:
-            1. **Native Save File Dialog & Export Fix**:
-               - Tombol Export dan unduh berkas kini memanggil dialog bawaan Windows "Save As" secara andal melalui Rust engine.
-            2. **Ikon Installer EXE Konsisten**:
-               - Berkas installer setup (.exe) kini menggunakan ikon kustom resmi AuditSpace yang sama persis dengan ikon aplikasi terpasang.
-            3. **Versi Aplikasi di Title Bar**:
-               - Judul title bar aplikasi Windows kini menampilkan versi aplikasi secara jelas (contoh: `AuditSpace v1.0.2 - Workspace`).
-            4. **Solusi 403 Rate-Limit pada Auto-Updater**:
+            1. **Segmented Switcher & Pemisah Kontrol Tampilan**:
+               - Switcher mode tampilan ("Infinite Canvas" vs "Modular Kanban") diperbarui menjadi kontrol tersegmentasi berkontras tinggi dengan garis pemisah vertikal (*divider*). Responsif dan tidak bertumpukan di ukuran layar kecil.
+            2. **Tombol Geser Kanban Jelas & Interaktif**:
+               - Tombol navigasi scroll Kanban diubah menjadi 2 tombol aksi mandiri berborder nyata: `[ ‹ Geser Kiri ]` dan `[ Geser Kanan › ]` dengan ikon chevron biru dan efek hover aktif.
+            3. **Perbaikan Penuh Mesin Dark Mode**:
+               - Mendukung Tailwind v4 dark-variant, otomatis mendeteksi tema Windows, menyimpan preferensi tema di `localStorage`, dan palet warna Catatan Tempel (*Sticky Notes*) yang nyaman di mata pada mode gelap.
+            4. **Sinkronisasi Logo Resmi Brand AuditSpace**:
+               - Logo di header aplikasi dan kop surat kertas kerja audit diseragamkan dengan ikon aplikasi resmi.
+            5. **Native Browser Launcher & Unduh Pembaruan**:
+               - Tombol Unduh Pembaruan dan tautan installer di Auto-Updater langsung membuka browser bawaan Windows via process launcher Rust.
+            6. **Native Save File Dialog & Export Fix**:
+               - Tombol Export dan unduh berkas memanggil dialog bawaan Windows "Save As" secara andal melalui Rust engine.
+            7. **Ikon Installer EXE Konsisten**:
+               - Berkas installer setup (.exe) menggunakan ikon kustom resmi AuditSpace yang sama persis dengan ikon aplikasi terpasang.
+            8. **Solusi 403 Rate-Limit pada Auto-Updater**:
                - Mengatasi batas kuota GitHub API 403 dengan fallback otomatis ke jaringan CDN mentah.
-            5. **Dukungan Berkas Lengkap pada Agenda**:
+            9. **Dukungan Berkas Lengkap pada Agenda**:
                - Mendukung multi-lampiran: Excel daftar hadir, transkrip teks .txt/.log, dokumen Word, dan surat undangan PDF.
-            6. **Edit Tautan & Pemisahan Tombol**:
+            10. **Edit Tautan & Pemisahan Tombol**:
                - Tautan di Materi Auditee kini dapat diedit dengan tombol pensil ✏️ dan tombol Tambah URL telah dipisahkan posisinya.
-            7. **Drag & Drop Berkas**:
-               - Drag-and-drop PDF dan dokumen langsung ke workspace dan modal tanpa kendala.
           releaseDraft: false
           prerelease: false
