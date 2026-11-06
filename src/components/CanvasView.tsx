@@ -47,6 +47,7 @@ interface CanvasViewProps {
   onEditSticky: (sticky: StickyNote) => void
   onPreviewPdf: (att: Attachment) => void
   onAutoLayout: () => void
+  onViewMeeting?: (meeting: MeetingCard) => void
 }
 
 export const CanvasView: React.FC<CanvasViewProps> = ({
@@ -65,6 +66,7 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
   onEditSticky,
   onPreviewPdf,
   onAutoLayout,
+  onViewMeeting,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -316,6 +318,15 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-1">
+                {onViewMeeting && (
+                  <button
+                    onClick={() => onViewMeeting(m)}
+                    className="p-1 text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md hover:bg-white/60 dark:hover:bg-zinc-800 transition"
+                    title="Buka Tampilan Penuh / Mode Baca"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={() => onEditMeeting(m)}
                   className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-md hover:bg-white/60 dark:hover:bg-zinc-800"
@@ -404,10 +415,26 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
 
               {/* Transcript Summary */}
               {m.transcript && (
-                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800">
-                  <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 mb-1 flex items-center gap-1">
-                    <span>Ringkasan / Transkrip Hasil Wawancara:</span>
-                  </p>
+                <div
+                  onClick={() => onViewMeeting?.(m)}
+                  className={`p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800 ${
+                    onViewMeeting
+                      ? 'cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xs transition group/trans'
+                      : ''
+                  }`}
+                  title={onViewMeeting ? 'Klik untuk membaca transkrip penuh di jendela besar' : undefined}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
+                      <span>Ringkasan / Transkrip Hasil Wawancara:</span>
+                    </p>
+                    {onViewMeeting && (
+                      <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold group-hover/trans:underline flex items-center gap-0.5">
+                        <Maximize2 className="w-3 h-3" />
+                        <span>Baca Penuh</span>
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-line leading-relaxed max-h-32 overflow-y-auto">
                     {m.transcript}
                   </p>

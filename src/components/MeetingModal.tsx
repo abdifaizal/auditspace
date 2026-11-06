@@ -12,8 +12,10 @@ import {
   Clock,
   Building,
   ArrowDownToLine,
+  Maximize2,
 } from 'lucide-react'
 import { fileToAttachment, formatBytes } from '../services/storage'
+import { MeetingReaderModal } from './MeetingReaderModal'
 
 interface MeetingModalProps {
   meeting: MeetingCard | null
@@ -116,6 +118,7 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
   const [newActionPoint, setNewActionPoint] = useState('')
   const [isUploading, setIsUploading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [isReaderOpen, setIsReaderOpen] = useState(false)
 
   const processFiles = async (files: FileList | File[]) => {
     if (!files || files.length === 0) return
@@ -401,15 +404,26 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
 
           {/* Transcript / Minutes of Meeting */}
           <div className="pt-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
-              Rangkuman / Transkrip Hasil Diskusi
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                Rangkuman / Transkrip Hasil Diskusi
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsReaderOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 font-semibold hover:underline bg-blue-50/60 dark:bg-blue-950/40 px-2 py-0.5 rounded-lg border border-blue-200/60 dark:border-blue-900/40 transition"
+                title="Buka tampilan besar untuk membaca dan mengedit transkrip dengan nyaman"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Perbesar / Mode Baca</span>
+              </button>
+            </div>
             <textarea
               rows={5}
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               placeholder="Tempelkan hasil wawancara, transkrip meeting, poin klarifikasi auditee, atau ringkasan diskusi di sini..."
-              className="w-full px-3 py-2 text-sm bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 font-sans"
+              className="w-full px-3 py-2 text-sm bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 font-sans leading-relaxed"
             />
           </div>
 
@@ -494,6 +508,30 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Reader Modal (Perbesar / Mode Baca) */}
+      <MeetingReaderModal
+        meeting={{
+          id: meeting?.id || 'temp',
+          title: title.trim() || 'Agenda Rapat & Diskusi',
+          auditeeUnit: auditeeUnit.trim() || 'Tim Auditee',
+          date,
+          time,
+          pdfInvite: attachments[0] || null,
+          attachments,
+          transcript,
+          actionPoints,
+          x: meeting?.x ?? 0,
+          y: meeting?.y ?? 0,
+        }}
+        isOpen={isReaderOpen}
+        onClose={() => setIsReaderOpen(false)}
+        onSaveMeeting={(updated) => {
+          setTranscript(updated.transcript)
+          setIsReaderOpen(false)
+        }}
+        onPreviewPdf={onPreviewPdf}
+      />
     </div>
   )
 }

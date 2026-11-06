@@ -67,7 +67,7 @@ function formatReleaseNotes(notes: string): string {
 export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
-  const currentVersion = '1.0.6'
+  const currentVersion = '1.0.7'
   const [status, setStatus] = useState<
     'idle' | 'checking' | 'available' | 'not-available' | 'error'
   >('idle')

@@ -35,6 +35,7 @@ import {
   Timer,
   Columns,
   Sparkles,
+  Maximize2,
 } from 'lucide-react'
 import { formatBytes, formatDateString } from '../services/storage'
 import { openExternalUrl } from '../services/nativeSave'
@@ -65,6 +66,7 @@ interface KanbanViewProps {
   onDeleteCustomColumn?: (columnId: string) => void
   onSaveCustomCard?: (card: CustomCard) => void
   onDeleteCustomCard?: (cardId: string) => void
+  onViewMeeting?: (meeting: MeetingCard) => void
 }
 
 const DEFAULT_TITLES: Record<string, string> = {
@@ -99,6 +101,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
   onDeleteCustomColumn,
   onSaveCustomCard,
   onDeleteCustomCard,
+  onViewMeeting,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPic, setSelectedPic] = useState('all')
@@ -458,9 +461,29 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                   })()}
 
                   {m.transcript && (
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed bg-zinc-50 dark:bg-zinc-800/40 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800">
-                      {m.transcript}
-                    </p>
+                    <div
+                      onClick={(e) => {
+                        if (onViewMeeting) {
+                          e.stopPropagation()
+                          onViewMeeting(m)
+                        }
+                      }}
+                      className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-600 transition group/trans cursor-pointer"
+                      title={onViewMeeting ? 'Klik untuk membaca transkrip penuh' : undefined}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-semibold text-zinc-500">Transkrip Diskusi</span>
+                        {onViewMeeting && (
+                          <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium group-hover/trans:underline flex items-center gap-0.5">
+                            <Maximize2 className="w-2.5 h-2.5" />
+                            <span>Baca</span>
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                        {m.transcript}
+                      </p>
+                    </div>
                   )}
                 </div>
               ))}

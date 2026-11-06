@@ -4,6 +4,19 @@ Semua catatan pembaruan dan perubahan resmi pada aplikasi **AuditSpace** didokum
 
 ---
 
+## [1.0.7] — 2026-11-06
+### ✨ Ditambahkan
+- **Mode Baca & Tampilan Besar Transkrip Diskusi (Meeting Reader & Viewer Modal)**:
+  - Tombol **"Perbesar / Mode Baca"** di samping label transkrip di form edit agenda diskusi untuk membaca atau mengedit teks panjang secara leluasa tanpa kendala *micro-scrolling*.
+  - Tombol **"Baca Penuh"** langsung di kartu Agenda & Diskusi (baik pada Infinite Canvas maupun Modular Kanban).
+  - **Pemformatan Dokumen Rapi**: Rendering otomatis untuk baris penomoran (`1. `, `2. `), bullet bertitik (`- `, `* `), checkbox (`[ ]`, `[x]`), dan penekanan teks tebal (`**bold**`).
+  - **Kontrol Ukuran Teks (A- / A+)**: Pengaturan ukuran font fleksibel untuk kenyamanan membaca risalah rapat yang panjang.
+  - **Salin Transkrip 1-Klik**: Tombol salin transkrip langsung ke clipboard.
+  - **Panel Konteks Lengkap**: Menampilkan daftar Poin Tindak Lanjut (*Action Items*) dan berkas lampiran (PDF Undangan, Excel Daftar Hadir, Teks Transkrip) dengan tombol pratinjau langsung di dalam jendela pembaca.
+  - **Mode Edit Langsung**: Memungkinkan pengeditan transkrip secara instan di dalam tampilan besar dan menyimpannya secara mulus.
+
+---
+
 ## [1.0.6] — 2026-11-06
 ### ✨ Ditambahkan
 - **In-App Auto-Updater (Download & Install Tanpa Browser)**:
@@ -48,38 +61,32 @@ Semua catatan pembaruan dan perubahan resmi pada aplikasi **AuditSpace** didokum
 ### 🛠️ Perbaikan Bug
 - **Mesin Dark Mode Tailwind v4**:
   - Memperbaiki pengenalan class `.dark` dengan `@custom-variant dark`.
-  - Sinkronisasi otomatis dengan tema bawaan Windows dan penyimpanan preferensi permanen di `localStorage`.
-  - Penyesuaian kontras warna Catatan Tempel pada mode gelap.
 
 ---
 
-## [1.0.2] — 2026-11-05
-### 🛠️ Perbaikan Sistem (Rust Core)
-- **Native Browser Launcher**:
-  - Memperbaiki tautan eksternal dan tombol unduh di WebView2 agar membuka browser bawaan Windows via process launcher Rust.
-- **Native Windows "Save As" Dialog**:
-  - Tombol Export berkas memanggil dialog penyimpanan berkas native Windows (`rfd`) secara andal.
-- **Ikon Installer Konsisten**:
-  - Ikon berkas setup NSIS installer disamakan dengan ikon aplikasi resmi.
-- **Versi Aplikasi di Title Bar**:
-  - Menampilkan versi aplikasi di judul jendela Windows (contoh: `AuditSpace v1.0.2 - Workspace`).
+## [1.0.2] — 2026-11-06
+### ✨ Ditambahkan
+- **Sinkronisasi Peer-to-Peer (P2P Local Mesh)**:
+  - Kolaborasi real-time tanpa server terpusat via WebRTC DataChannel antar perangkat di jaringan lokal / WiFi.
+- **Multi-Document Support pada Kartu Diskusi**:
+  - Dukungan mengunggah dan mempratinjau file Excel (.xlsx/.xls/.csv) untuk daftar hadir peserta dan file teks transkrip (.txt/.log).
+- **Auto-Updater Terintegrasi**:
+  - Pengecekan otomatis rilis terbaru dari repositori GitHub `abdifaizal/auditspace`.
 
 ---
 
-## [1.0.1] — 2026-11-04
-### ✨ Fitur Baru
-- **Dukungan Multi-Lampiran Agenda**:
-  - Mendukung berkas Excel daftar hadir (.xlsx, .xls), transkrip teks (.txt, .log), dokumen Word (.docx), dan surat undangan (.pdf).
-- **Edit Tautan URL**:
-  - Tombol pensil untuk mengedit tautan di repositori Materi Auditee.
-  - Pemisahan tombol Tambah URL dan tombol Simpan.
-- **Drag-and-Drop Berkas**:
-  - Memperbaiki upload dokumen via drag-and-drop langsung ke workspace.
+## [1.0.1] — 2026-11-05
+### 🛠️ Perbaikan & Peningkatan
+- Perbaikan kompatibilitas path Windows pada penyimpanan data offline.
+- Peningkatan performa render grafik koneksi pada Infinite Canvas.
 
 ---
 
 ## [1.0.0] — 2026-11-04
-### 🚀 Rilis Perdana
-- Rilis resmi AuditSpace dengan mode Infinite Canvas dan Modular Kanban.
-- Manajemen Multi-Space audit.
-- Penyimpanan lokal privat & ekspor paket `.auditpkg`.
+### 🚀 Rilis Perdana (Initial Release)
+- **Infinite Canvas & Modular Kanban**: Dua mode kerja fleksibel untuk audit engagement.
+- **Agenda & Diskusi Auditee**: Manajemen pertemuan audit dan lampiran surat/PDF.
+- **Materi & Vault Auditee**: Penyimpanan dokumen kebijakan, SOP, arsitektur, dan tautan sistem.
+- **Manajemen Tugas & Temuan Audit**: Kartu to-do, in-progress, dan done dengan status prioritas.
+- **Ekspor Laporan Interaktif**: Hasilkan laporan audit HTML mandiri (*standalone*) siap presentasi.
+- **Offline First**: Seluruh data tersimpan aman secara lokal di perangkat tanpa kebergantungan cloud publik.

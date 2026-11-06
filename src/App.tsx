@@ -34,6 +34,7 @@ import { Header } from './components/Header'
 import { CanvasView } from './components/CanvasView'
 import { KanbanView } from './components/KanbanView'
 import { MeetingModal } from './components/MeetingModal'
+import { MeetingReaderModal } from './components/MeetingReaderModal'
 import { MaterialModal } from './components/MaterialModal'
 import { TaskModal } from './components/TaskModal'
 import { StickyModal } from './components/StickyModal'
@@ -78,6 +79,7 @@ export function App() {
   // Modals
   const [editingMeeting, setEditingMeeting] = useState<MeetingCard | null>(null)
   const [isMeetingOpen, setIsMeetingOpen] = useState(false)
+  const [readingMeeting, setReadingMeeting] = useState<MeetingCard | null>(null)
 
   const [editingMaterial, setEditingMaterial] = useState<MaterialVaultCard | null>(null)
   const [isMaterialOpen, setIsMaterialOpen] = useState(false)
@@ -697,6 +699,7 @@ export function App() {
             }}
             onPreviewPdf={(att) => setPreviewAttachment(att)}
             onAutoLayout={handleAutoLayout}
+            onViewMeeting={(m) => setReadingMeeting(m)}
           />
         ) : (
           <KanbanView
@@ -708,6 +711,7 @@ export function App() {
             customColumns={activeSpace.customColumns || []}
             customCards={activeSpace.customCards || []}
             onAddNew={handleAddNew}
+            onViewMeeting={(m) => setReadingMeeting(m)}
             onEditMeeting={(m) => {
               setEditingMeeting(m)
               setIsMeetingOpen(true)
@@ -745,6 +749,19 @@ export function App() {
         onClose={() => setIsMeetingOpen(false)}
         onSave={handleSaveMeeting}
         onDelete={handleDeleteMeeting}
+        onPreviewPdf={(att) => setPreviewAttachment(att)}
+      />
+
+      <MeetingReaderModal
+        meeting={readingMeeting}
+        isOpen={!!readingMeeting}
+        onClose={() => setReadingMeeting(null)}
+        onEditMeeting={(m) => {
+          setReadingMeeting(null)
+          setEditingMeeting(m)
+          setIsMeetingOpen(true)
+        }}
+        onSaveMeeting={handleSaveMeeting}
         onPreviewPdf={(att) => setPreviewAttachment(att)}
       />
 
