@@ -4,6 +4,18 @@ Semua catatan pembaruan dan perubahan resmi pada aplikasi **AuditSpace** didokum
 
 ---
 
+## [1.0.12] — 2026-11-06
+### 🛡️ Restorasi Utuh Transkrip (867 Kata) & Berkas PDF Asli
+- **Pemulihan Penuh 100% Transkrip Rapat Diskusi DRB (8 Poin Utama, 867 Kata)**:
+  - Berhasil mengekstrak kembali seluruh naskah transkrip rapat secara utuh dari penyimpanan biner LevelDB (Poin 1 hingga Poin 8 lengkap: Latar Belakang, Positioning Qita vs BRImo, Roadmap & Perizinan OJK/BI, Fitur Utama & Gaya Hidup, Arsitektur Teknis Hybrid/OTA, Keamanan & Pentest CISO/GuardSquare, Konten Promosi Insider, dan Langkah Selanjutnya).
+- **Pemulihan Berkas Dokumen PDF Asli (`22127218.pdf`)**:
+  - Memulihkan data biner utuh (*Base64 DataUrl*) berkas PDF lampiran undangan (`22127218.pdf`, 243.5 KB) sehingga tombol **"Buka"** pada modal transkrip dan kartu agenda langsung menampilkan dokumen pratinjau PDF di viewer tanpa kendala.
+  - Memulihkan berkas fisik dokumen `22127218.pdf` langsung ke folder `Downloads` pengguna.
+- **Peningkatan Integritas Penyimpanan Multi-Space**:
+  - Memperkuat verifikasi integritas data ruang pada *startup* untuk mendeteksi dan secara otomatis melengkapi data yang belum sempurna.
+
+---
+
 ## [1.0.11] — 2026-11-06
 ### 🛡️ Isolasi Ruang P2P & Pemulihan Data Otomatis
 - **Pemulihan Otomatis Ruang Kerja Asli (`Advisory QITA 2026`)**:

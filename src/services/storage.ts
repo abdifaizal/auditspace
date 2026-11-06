@@ -15,29 +15,38 @@ export function loadMultiSpaceStore(): MultiSpaceStore {
         let modified = false
 
         // RECOVERY MIGRATION:
-        // Check if Advisory QITA 2026 was lost or overwritten by a P2P session
-        const hasQita = parsed.spaces.some((s) =>
+        // Ensure Advisory QITA 2026 is fully restored with complete 867-word transcript and 22127218.pdf
+        const qitaIndex = parsed.spaces.findIndex((s) =>
           s.projectMeta?.name?.toLowerCase().includes('qita')
         )
 
-        if (!hasQita) {
-          // If Audit BGF or another space had ID 'proj-default-1', re-id it to prevent collision
-          parsed.spaces = parsed.spaces.map((s) => {
-            if (s.projectMeta?.id === 'proj-default-1') {
-              modified = true
-              const safeId = s.projectMeta.name.includes('BGF')
-                ? 'proj-audit-bgf-2026'
-                : 'proj-' + Math.random().toString(36).substring(2, 9)
-              return {
-                ...s,
-                projectMeta: { ...s.projectMeta, id: safeId },
-              }
-            }
-            return s
-          })
+        const existingQita = qitaIndex >= 0 ? parsed.spaces[qitaIndex] : null
+        const isQitaIncomplete =
+          !existingQita ||
+          !existingQita.meetings?.[0]?.transcript ||
+          existingQita.meetings[0].transcript.length < 5000 ||
+          !existingQita.meetings[0]?.attachments?.[0]?.dataUrl ||
+          existingQita.meetings[0].attachments[0].dataUrl.length < 1000
 
+        if (isQitaIncomplete) {
           const recoveredQita = getRecoveredQitaWorkspace()
-          parsed.spaces = [recoveredQita, ...parsed.spaces]
+          if (qitaIndex >= 0) {
+            parsed.spaces[qitaIndex] = recoveredQita
+          } else {
+            parsed.spaces = parsed.spaces.map((s) => {
+              if (s.projectMeta?.id === 'proj-default-1' || s.projectMeta?.id === recoveredQita.projectMeta.id) {
+                return {
+                  ...s,
+                  projectMeta: {
+                    ...s.projectMeta,
+                    id: s.projectMeta.name.includes('BGF') ? 'proj-audit-bgf-2026' : 'proj-' + Math.random().toString(36).substring(2, 9),
+                  },
+                }
+              }
+              return s
+            })
+            parsed.spaces = [recoveredQita, ...parsed.spaces]
+          }
           parsed.activeSpaceId = recoveredQita.projectMeta.id
           modified = true
         }
