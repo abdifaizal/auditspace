@@ -16,6 +16,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Minimize2,
   ListTodo,
   Paperclip,
   Share2,
@@ -44,13 +45,14 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [editedTranscript, setEditedTranscript] = useState(meeting.transcript || '')
   const [copied, setCopied] = useState(false)
-  const [fontSizeLevel, setFontSizeLevel] = useState<number>(1) // 0: sm, 1: base, 2: lg, 3: xl
+  const [fontSizeLevel, setFontSizeLevel] = useState<number>(1) // 0: 12px, 1: 13px (Fokus/Default), 2: 14px, 3: 16px
+  const [isFullWidth, setIsFullWidth] = useState(false) // Toggle between max-w-3xl (fokus) and full width
 
-  const fontSizeClasses = [
-    'text-sm leading-relaxed',
-    'text-base leading-relaxed',
-    'text-lg leading-loose',
-    'text-xl leading-loose',
+  const fontSizeLevels = [
+    { label: '12px', bodyClass: 'text-xs leading-normal' },
+    { label: '13px (Fokus)', bodyClass: 'text-[13px] leading-relaxed' },
+    { label: '14px', bodyClass: 'text-sm leading-relaxed' },
+    { label: '16px', bodyClass: 'text-base leading-normal' },
   ]
 
   const handleCopyTranscript = () => {
@@ -76,8 +78,17 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
   const renderFormattedLine = (line: string, idx: number) => {
     const trimmed = line.trim()
     if (!trimmed) {
-      return <div key={idx} className="h-3" />
+      return <div key={idx} className="h-1.5" />
     }
+
+    // Horizontal divider
+    if (/^[-*_]{3,}$/.test(trimmed)) {
+      return <hr key={idx} className="my-2.5 border-zinc-200 dark:border-zinc-800" />
+    }
+
+    // Detect indentation level (spaces or tabs before text)
+    const leadingSpaces = line.match(/^(\s*)/)?.[1].length || 0
+    const isNested = leadingSpaces >= 2
 
     // Inline bold formatting (**bold**)
     const formatInline = (text: string) => {
@@ -85,7 +96,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
       return parts.map((part, pIdx) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <strong key={pIdx} className="font-bold text-zinc-900 dark:text-zinc-50">
+            <strong key={pIdx} className="font-semibold text-zinc-900 dark:text-zinc-50">
               {part.slice(2, -2)}
             </strong>
           )
@@ -94,15 +105,20 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
       })
     }
 
-    // Numbered list: "1. ", "1) ", "(1) "
+    // Numbered list: "1. ", "1) ", "(1) " -> Clean section header
     const numberMatch = trimmed.match(/^(\d+[\.\)]|\(\d+\))\s+(.*)$/)
     if (numberMatch) {
       return (
-        <div key={idx} className="flex items-start gap-2.5 py-1">
-          <span className="font-bold text-blue-600 dark:text-blue-400 shrink-0 select-none min-w-[24px]">
+        <div
+          key={idx}
+          className={`flex items-start gap-2 pt-2.5 pb-0.5 mt-1 border-t first:border-t-0 border-zinc-100 dark:border-zinc-800/80 ${
+            isNested ? 'ml-5 pl-2' : ''
+          }`}
+        >
+          <span className="font-bold text-blue-600 dark:text-blue-400 shrink-0 select-none min-w-[20px]">
             {numberMatch[1]}
           </span>
-          <span className="flex-1 text-zinc-800 dark:text-zinc-200">
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100 flex-1 leading-snug">
             {formatInline(numberMatch[2])}
           </span>
         </div>
@@ -113,9 +129,14 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
     const bulletMatch = trimmed.match(/^[-*•]\s+(.*)$/)
     if (bulletMatch) {
       return (
-        <div key={idx} className="flex items-start gap-2.5 py-1 pl-1">
-          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-2 select-none" />
-          <span className="flex-1 text-zinc-800 dark:text-zinc-200">
+        <div
+          key={idx}
+          className={`flex items-start gap-2 py-0.5 ${
+            isNested ? 'ml-5 pl-2 text-zinc-700 dark:text-zinc-300' : 'text-zinc-800 dark:text-zinc-200'
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500/80 shrink-0 mt-1.5 select-none" />
+          <span className="flex-1 leading-normal">
             {formatInline(bulletMatch[1])}
           </span>
         </div>
@@ -127,18 +148,18 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
     if (checkMatch) {
       const isChecked = checkMatch[1].toLowerCase() === 'x'
       return (
-        <div key={idx} className="flex items-start gap-2.5 py-1">
+        <div key={idx} className={`flex items-start gap-2 py-0.5 ${isNested ? 'ml-5 pl-2' : ''}`}>
           <span
-            className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-1 ${
+            className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 mt-0.5 ${
               isChecked
                 ? 'bg-blue-600 border-blue-600 text-white'
                 : 'border-zinc-300 dark:border-zinc-600'
             }`}
           >
-            {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+            {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
           </span>
           <span
-            className={`flex-1 ${
+            className={`flex-1 leading-normal ${
               isChecked
                 ? 'line-through text-zinc-400 dark:text-zinc-500'
                 : 'text-zinc-800 dark:text-zinc-200'
@@ -158,7 +179,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
         return (
           <h3
             key={idx}
-            className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mt-4 mb-2 border-b border-zinc-200 dark:border-zinc-800 pb-1"
+            className="text-base font-bold text-zinc-900 dark:text-zinc-100 mt-3 mb-1 border-b border-zinc-200 dark:border-zinc-800 pb-1"
           >
             {formatInline(text)}
           </h3>
@@ -167,7 +188,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
       return (
         <h4
           key={idx}
-          className="text-base font-bold text-zinc-900 dark:text-zinc-100 mt-3 mb-1.5"
+          className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-2.5 mb-1"
         >
           {formatInline(text)}
         </h4>
@@ -180,7 +201,9 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
       return (
         <p
           key={idx}
-          className="font-semibold text-zinc-900 dark:text-zinc-100 mt-3 mb-1"
+          className={`font-semibold text-zinc-900 dark:text-zinc-100 mt-2 mb-0.5 ${
+            isNested ? 'ml-5 pl-2' : ''
+          }`}
         >
           {formatInline(trimmed)}
         </p>
@@ -188,7 +211,12 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
     }
 
     return (
-      <p key={idx} className="text-zinc-800 dark:text-zinc-200 py-0.5">
+      <p
+        key={idx}
+        className={`text-zinc-800 dark:text-zinc-200 py-0.5 leading-normal ${
+          isNested ? 'ml-5 pl-2 text-zinc-700 dark:text-zinc-300' : ''
+        }`}
+      >
         {formatInline(trimmed)}
       </p>
     )
@@ -241,7 +269,7 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
 
           {/* Action Toolbar */}
           <div className="flex items-center gap-2 self-end sm:self-center">
-            {/* Font Zoom Controls */}
+            {/* Font Zoom & Focus Width Controls */}
             {!isEditing && (
               <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 border border-zinc-200 dark:border-zinc-700">
                 <button
@@ -253,7 +281,9 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
                 >
                   A-
                 </button>
-                <div className="w-[1px] h-3 bg-zinc-300 dark:bg-zinc-700 mx-0.5" />
+                <span className="px-1.5 text-[11px] font-medium text-zinc-500 select-none">
+                  {fontSizeLevels[fontSizeLevel].label}
+                </span>
                 <button
                   type="button"
                   onClick={() => setFontSizeLevel((prev) => Math.min(3, prev + 1))}
@@ -262,6 +292,19 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
                   title="Perbesar Ukuran Teks (A+)"
                 >
                   A+
+                </button>
+                <div className="w-[1px] h-3 bg-zinc-300 dark:bg-zinc-700 mx-1" />
+                <button
+                  type="button"
+                  onClick={() => setIsFullWidth(!isFullWidth)}
+                  className={`p-1 rounded text-xs transition ${
+                    isFullWidth
+                      ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300'
+                      : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700'
+                  }`}
+                  title={isFullWidth ? 'Beralih ke Lebar Fokus Dokumen (Rekomendasi)' : 'Beralih ke Layar Penuh'}
+                >
+                  {isFullWidth ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
                 </button>
               </div>
             )}
@@ -358,12 +401,12 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
             </div>
 
             {isEditing ? (
-              <div className="space-y-3 h-[calc(100%-40px)] flex flex-col">
+              <div className={`space-y-3 h-[calc(100%-40px)] flex flex-col ${isFullWidth ? 'w-full' : 'max-w-3xl mx-auto'}`}>
                 <textarea
                   value={editedTranscript}
                   onChange={(e) => setEditedTranscript(e.target.value)}
                   placeholder="Ketik atau tempel transkrip diskusi di sini..."
-                  className="flex-1 w-full p-4 text-sm font-sans bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 resize-none leading-relaxed"
+                  className="flex-1 w-full p-4 text-[13px] font-sans bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 resize-none leading-relaxed"
                 />
                 <div className="flex items-center justify-between text-xs text-zinc-500">
                   <span>Mendukung teks biasa, baris penomoran (1.), bullet (-), dan bold (**teks**).</span>
@@ -386,28 +429,30 @@ export const MeetingReaderModal: React.FC<MeetingReaderModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className={`space-y-1 font-sans ${fontSizeClasses[fontSizeLevel]}`}>
-                {meeting.transcript ? (
-                  meeting.transcript
-                    .split('\n')
-                    .map((line, idx) => renderFormattedLine(line, idx))
-                ) : (
-                  <div className="p-8 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl my-4">
-                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                    <p className="text-sm font-medium">Belum ada transkrip atau ringkasan hasil diskusi.</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditedTranscript('')
-                        setIsEditing(true)
-                      }}
-                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Tulis Transkrip Sekarang</span>
-                    </button>
-                  </div>
-                )}
+              <div className={`${isFullWidth ? 'w-full' : 'max-w-3xl mx-auto'} transition-all duration-150`}>
+                <div className={`space-y-0.5 font-sans ${fontSizeLevels[fontSizeLevel].bodyClass}`}>
+                  {meeting.transcript ? (
+                    meeting.transcript
+                      .split('\n')
+                      .map((line, idx) => renderFormattedLine(line, idx))
+                  ) : (
+                    <div className="p-8 text-center text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl my-4">
+                      <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm font-medium">Belum ada transkrip atau ringkasan hasil diskusi.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditedTranscript('')
+                          setIsEditing(true)
+                        }}
+                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Tulis Transkrip Sekarang</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

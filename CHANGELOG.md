@@ -4,6 +4,17 @@ Semua catatan pembaruan dan perubahan resmi pada aplikasi **AuditSpace** didokum
 
 ---
 
+## [1.0.9] — 2026-11-06
+### 🎨 Tipografi & Peningkatan Kenyamanan Baca
+- **Optimalisasi Mode Baca Transkrip Diskusi (Fokus & Ergonomis)**:
+  - **Tata Letak Lebar Fokus (*Focused Reading Column*)**: Lebar konten membaca dibatasi ke `max-w-3xl` dengan posisi terpusat secara default agar mata tidak lelah menyusuri layar yang terlalu lebar saat teks panjang.
+  - **Tombol Alih Lebar (*Width Toggle*)**: Tombol untuk beralih instan antara **Mode Fokus (Rekomendasi)** dan **Layar Penuh (Full Width)**.
+  - **Ukuran Font Proposional & Kompak**: Default ukuran font disesuaikan ke ukuran fokus yang pas (`13px (Fokus)`) dengan *line-height* (`leading-relaxed`) dan jarak vertikal yang rapat dan tertata rapi.
+  - **Indentasi Sub-Poin Otomatis**: Baris bullet berspasi indentasi kini otomatis menjorok ke dalam (`ml-5 pl-2`) di bawah judul poin/nomor utama.
+  - **Pemisah Bagian & Nomor Terstruktur**: Judul poin bernomor (`1. `, `2. `) diformat sebagai pemisah sub-topik yang tegas dan elegan.
+
+---
+
 ## [1.0.8] — 2026-11-06
 ### 🛠️ Perbaikan Bug
 - **Perbaikan Mesin In-App Auto-Updater (Download Langsung)**:
