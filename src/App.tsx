@@ -53,8 +53,27 @@ export function App() {
   const [viewMode, setViewMode] = useState<'canvas' | 'kanban'>('canvas')
   const [lastSavedTime, setLastSavedTime] = useState<string>('')
   const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('auditspace_theme')
+    if (saved === 'dark') return true
+    if (saved === 'light') return false
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches || false
   })
+
+  // Listen to Windows / OS theme changes when not manually overridden
+  useEffect(() => {
+    const mediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)')
+    if (!mediaQuery) return
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      const saved = localStorage.getItem('auditspace_theme')
+      if (!saved) {
+        setDarkMode(e.matches)
+      }
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
 
   // Modals
   const [editingMeeting, setEditingMeeting] = useState<MeetingCard | null>(null)
@@ -128,6 +147,12 @@ export function App() {
       document.documentElement.classList.remove('dark')
     }
   }, [darkMode])
+
+  const handleToggleDarkMode = () => {
+    const nextDark = !darkMode
+    setDarkMode(nextDark)
+    localStorage.setItem('auditspace_theme', nextDark ? 'dark' : 'light')
+  }
 
   // Synchronize document.title to display app version on the native title bar
   useEffect(() => {
@@ -618,7 +643,7 @@ export function App() {
         collabRoomId={collabState.roomId}
         lastSavedTime={lastSavedTime}
         darkMode={darkMode}
-        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        onToggleDarkMode={handleToggleDarkMode}
       />
 
       {/* Read-Only Collaboration Banner */}

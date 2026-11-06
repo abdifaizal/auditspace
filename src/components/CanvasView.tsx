@@ -671,11 +671,11 @@ export const CanvasView: React.FC<CanvasViewProps> = ({
         {/* 4. STICKY NOTES */}
         {stickies.map((s) => {
           const colorStyles = {
-            amber: 'bg-amber-100 text-amber-900 border-amber-300 shadow-amber-200/40',
-            blue: 'bg-blue-100 text-blue-900 border-blue-300 shadow-blue-200/40',
-            emerald: 'bg-emerald-100 text-emerald-900 border-emerald-300 shadow-emerald-200/40',
-            purple: 'bg-purple-100 text-purple-900 border-purple-300 shadow-purple-200/40',
-            rose: 'bg-rose-100 text-rose-900 border-rose-300 shadow-rose-200/40',
+            amber: 'bg-amber-100 dark:bg-amber-950/40 text-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-800 shadow-amber-200/40 dark:shadow-none',
+            blue: 'bg-blue-100 dark:bg-blue-950/40 text-blue-950 dark:text-blue-200 border-blue-300 dark:border-blue-800 shadow-blue-200/40 dark:shadow-none',
+            emerald: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800 shadow-emerald-200/40 dark:shadow-none',
+            purple: 'bg-purple-100 dark:bg-purple-950/40 text-purple-950 dark:text-purple-200 border-purple-300 dark:border-purple-800 shadow-purple-200/40 dark:shadow-none',
+            rose: 'bg-rose-100 dark:bg-rose-950/40 text-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-800 shadow-rose-200/40 dark:shadow-none',
           }[s.color]
 
           return (

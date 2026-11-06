@@ -196,22 +196,23 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Scroll navigation arrows */}
-          <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-0.5">
+          {/* Scroll navigation action buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={handleScrollLeft}
-              className="p-1 hover:bg-white dark:hover:bg-zinc-700 rounded-lg text-zinc-600 dark:text-zinc-300 transition"
-              title="Geser Papan ke Kiri"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 border border-zinc-300 dark:border-zinc-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-xs hover:shadow transition active:scale-95"
+              title="Geser Kolom Papan ke Kiri"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <span>Geser Kiri</span>
             </button>
-            <span className="text-[10px] font-semibold text-zinc-400 px-1">Geser</span>
             <button
               onClick={handleScrollRight}
-              className="p-1 hover:bg-white dark:hover:bg-zinc-700 rounded-lg text-zinc-600 dark:text-zinc-300 transition"
-              title="Geser Papan ke Kanan"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 border border-zinc-300 dark:border-zinc-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-xs hover:shadow transition active:scale-95"
+              title="Geser Kolom Papan ke Kanan"
             >
-              <ChevronRight className="w-4 h-4" />
+              <span>Geser Kanan</span>
+              <ChevronRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
             </button>
           </div>
 
@@ -289,11 +290,11 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             <div className="flex-1 p-3 space-y-3 overflow-y-auto">
               {filteredStickies.map((s) => {
                 const colorMap = {
-                  amber: 'bg-amber-100 border-amber-300 text-amber-900',
-                  blue: 'bg-blue-100 border-blue-300 text-blue-900',
-                  emerald: 'bg-emerald-100 border-emerald-300 text-emerald-900',
-                  purple: 'bg-purple-100 border-purple-300 text-purple-900',
-                  rose: 'bg-rose-100 border-rose-300 text-rose-900',
+                  amber: 'bg-amber-100 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200',
+                  blue: 'bg-blue-100 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 text-blue-950 dark:text-blue-200',
+                  emerald: 'bg-emerald-100 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200',
+                  purple: 'bg-purple-100 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800 text-purple-950 dark:text-purple-200',
+                  rose: 'bg-rose-100 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-950 dark:text-rose-200',
                 }[s.color]
 
                 return (

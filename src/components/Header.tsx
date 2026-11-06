@@ -261,30 +261,37 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Center: View Switcher (Watermelon segmented button style) */}
-      <div className="flex items-center p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-        <button
-          onClick={() => onViewModeChange('canvas')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition ${
-            viewMode === 'canvas'
-              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm'
-              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span>Infinite Canvas</span>
-        </button>
-        <button
-          onClick={() => onViewModeChange('kanban')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition ${
-            viewMode === 'kanban'
-              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm'
-              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-          }`}
-        >
-          <LayoutGrid className="w-3.5 h-3.5 text-blue-500" />
-          <span>Modular Kanban</span>
-        </button>
+      {/* Center: View Switcher (High-Contrast Segmented Control with Divider) */}
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center p-1 rounded-xl bg-zinc-200/80 dark:bg-zinc-800/90 border border-zinc-300/80 dark:border-zinc-700 shadow-inner">
+          <button
+            onClick={() => onViewModeChange('canvas')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition ${
+              viewMode === 'canvas'
+                ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 font-bold shadow-sm border border-zinc-200/60 dark:border-zinc-700/60'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium'
+            }`}
+            title="Beralih ke Tampilan Infinite Canvas"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span className="hidden sm:inline">Infinite Canvas</span>
+          </button>
+          <button
+            onClick={() => onViewModeChange('kanban')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition ${
+              viewMode === 'kanban'
+                ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 font-bold shadow-sm border border-zinc-200/60 dark:border-zinc-700/60'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium'
+            }`}
+            title="Beralih ke Tampilan Modular Kanban"
+          >
+            <LayoutGrid className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span className="hidden sm:inline">Modular Kanban</span>
+          </button>
+        </div>
+
+        {/* Visual Divider Separator before Right Actions */}
+        <div className="h-6 w-px bg-zinc-300 dark:bg-zinc-700 hidden md:block shrink-0" />
       </div>
 
       {/* Right Actions */}
