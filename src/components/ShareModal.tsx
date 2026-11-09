@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react'
 import {
   X,
   Radio,
-  Users,
   Copy,
   Check,
-  Shield,
   Eye,
   Edit3,
   Loader2,
@@ -13,7 +11,8 @@ import {
   Link,
   PowerOff,
   AlertCircle,
-  CheckCircle2,
+  User,
+  Users,
 } from 'lucide-react'
 import { AuditWorkspace } from '../types'
 import { p2pSync, CollabState, AccessMode } from '../services/p2pSync'
@@ -35,6 +34,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [accessMode, setAccessMode] = useState<AccessMode>('read-only')
   const [customCodeInput, setCustomCodeInput] = useState('')
   const [joinCodeInput, setJoinCodeInput] = useState('')
+  const [userName, setUserName] = useState(() => {
+    return (
+      localStorage.getItem('auditspace_collab_name') ||
+      workspace.projectMeta.leadAuditor ||
+      'Auditor'
+    )
+  })
   const [isCopied, setIsCopied] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
 
@@ -53,9 +59,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   if (!isOpen) return null
 
   const handleStartHosting = async () => {
+    const trimmedName = userName.trim() || 'Auditor (Host)'
+    localStorage.setItem('auditspace_collab_name', trimmedName)
     setIsConnecting(true)
     try {
-      await p2pSync.startHosting(workspace, accessMode, customCodeInput.trim() || undefined)
+      await p2pSync.startHosting(
+        workspace,
+        accessMode,
+        customCodeInput.trim() || undefined,
+        trimmedName
+      )
     } catch (err) {
       console.error('Failed to start hosting:', err)
     } finally {
@@ -68,9 +81,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       alert('Masukkan kode ruang rekan terlebih dahulu!')
       return
     }
+    const trimmedName = userName.trim() || 'Rekan Auditor'
+    localStorage.setItem('auditspace_collab_name', trimmedName)
     setIsConnecting(true)
     try {
-      await p2pSync.joinRoom(joinCodeInput.trim())
+      await p2pSync.joinRoom(joinCodeInput.trim(), trimmedName)
     } catch (err) {
       console.error('Failed to join room:', err)
     } finally {
@@ -166,6 +181,37 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   Perangkat Terhubung: <strong>{collabState.connectedPeersCount}</strong>
                 </span>
               </div>
+
+              {/* Roster of active participants */}
+              {collabState.participants && collabState.participants.length > 0 && (
+                <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40">
+                  <div className="flex items-center gap-1 text-[10px] uppercase text-zinc-500 font-bold mb-2">
+                    <Users className="w-3 h-3 text-emerald-600" />
+                    <span>Peserta Aktif di Ruang Ini ({collabState.participants.length}):</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {collabState.participants.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-900/40 text-xs shadow-xs"
+                      >
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white uppercase shrink-0"
+                          style={{ backgroundColor: p.color }}
+                        >
+                          {p.name.substring(0, 2)}
+                        </span>
+                        <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                          {p.name} {p.isYou ? '(Anda)' : ''}
+                        </span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold uppercase">
+                          {p.role === 'host' ? 'Host' : collabState.accessMode === 'read-write' ? 'Editor' : 'Peninjau'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -180,6 +226,24 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           {/* Not connected yet: Tab navigation */}
           {!collabState.isConnected && (
             <>
+              {/* Profile name input */}
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded-xl border border-zinc-200 dark:border-zinc-700/60 space-y-1">
+                <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-zinc-600 dark:text-zinc-300">
+                  <User className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Nama / Identitas Anda di Ruang:</span>
+                </label>
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Contoh: Faizal (Auditor)"
+                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100"
+                />
+                <p className="text-[10px] text-zinc-400">
+                  Nama ini akan terlihat oleh rekan lain yang terhubung di ruang kerja.
+                </p>
+              </div>
+
               <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl">
                 <button
                   onClick={() => setActiveTab('host')}

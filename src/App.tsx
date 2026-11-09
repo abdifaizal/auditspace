@@ -21,7 +21,7 @@ import {
   factoryResetStorage,
   fileToAttachment,
 } from './services/storage'
-import { Upload, CheckCircle2 } from 'lucide-react'
+import { Upload, CheckCircle2, RefreshCw } from 'lucide-react'
 import {
   getNextMeetingPosition,
   getNextMaterialPosition,
@@ -46,8 +46,10 @@ import { CloudSyncModal } from './components/CloudSyncModal'
 import { UpdateModal } from './components/UpdateModal'
 import { ResetConfirmModal } from './components/ResetConfirmModal'
 import { ShareModal } from './components/ShareModal'
+import { DisconnectPromptModal } from './components/DisconnectPromptModal'
 import { exportInteractiveHtmlReport } from './services/htmlReportExporter'
 import { p2pSync, CollabState } from './services/p2pSync'
+import { getGmt7Time } from './services/smartMerge'
 
 export function App() {
   const [multiStore, setMultiStore] = useState<MultiSpaceStore>(() => loadMultiSpaceStore())
@@ -99,6 +101,10 @@ export function App() {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [isDisconnectPromptOpen, setIsDisconnectPromptOpen] = useState(false)
+  const [isReconnecting, setIsReconnecting] = useState(false)
+  const [offlineDraftCount, setOfflineDraftCount] = useState<number>(0)
+  const [disconnectedWorkspaceSnapshot, setDisconnectedWorkspaceSnapshot] = useState<AuditWorkspace | null>(null)
   const [collabState, setCollabState] = useState<CollabState>(p2pSync.getState())
   const [isWindowDragOver, setIsWindowDragOver] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -111,19 +117,26 @@ export function App() {
     const unsubState = p2pSync.subscribeState((newState) => {
       setCollabState(newState)
 
-      // When peer disconnects, restore local space as active
-      if (prevConnected && !newState.isConnected && prevRole === 'peer') {
+      // When peer disconnects unexpectedly (e.g. host sleep/closed/timeout), keep remote space locked and prompt user
+      if (newState.wasUnexpectedDisconnect) {
         setMultiStore((prevStore) => {
-          const fallback =
-            prevStore.spaces.find((s) => !s.projectMeta.id.startsWith('p2p-session-')) ||
-            prevStore.spaces[0]
-          if (fallback && prevStore.activeSpaceId !== fallback.projectMeta.id) {
-            return {
-              ...prevStore,
-              activeSpaceId: fallback.projectMeta.id,
-            }
+          const remote = prevStore.spaces.find((s) => s.projectMeta.id === prevStore.activeSpaceId)
+          if (remote) {
+            setDisconnectedWorkspaceSnapshot(remote)
           }
           return prevStore
+        })
+        setIsDisconnectPromptOpen(true)
+      } else if (prevConnected && !newState.isConnected && prevRole === 'peer') {
+        // Normal/intentional disconnect: cleanly clean up remote space and restore local space
+        setMultiStore((prevStore) => {
+          const cleaned = prevStore.spaces.filter((s) => !s.projectMeta.id.startsWith('p2p-session-'))
+          const fallback =
+            cleaned.find((s) => !s.projectMeta.id.startsWith('p2p-session-')) || cleaned[0]
+          return {
+            spaces: cleaned.length > 0 ? cleaned : prevStore.spaces,
+            activeSpaceId: fallback ? fallback.projectMeta.id : prevStore.activeSpaceId,
+          }
         })
       }
 
@@ -180,9 +193,16 @@ export function App() {
       })
     })
 
+    const unsubResync = p2pSync.subscribeResyncCompleted((summary) => {
+      setOfflineDraftCount(0)
+      setToastMessage(`✓ Re-sync berhasil: ${summary}`)
+      setTimeout(() => setToastMessage(null), 5000)
+    })
+
     return () => {
       unsubState()
       unsubWs()
+      unsubResync()
     }
   }, [])
 
@@ -194,11 +214,11 @@ export function App() {
     if (isTauri) {
       import('@tauri-apps/api/window')
         .then(({ getCurrentWindow }) => {
-          getCurrentWindow().setTitle('AuditSpace v1.0.13').catch(() => {})
+          getCurrentWindow().setTitle('AuditSpace v1.0.14').catch(() => {})
         })
         .catch(() => {})
     }
-    document.title = 'AuditSpace v1.0.13'
+    document.title = 'AuditSpace v1.0.14'
   }, [])
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
@@ -235,15 +255,69 @@ export function App() {
   // Synchronize document.title to display app version on the native title bar
   useEffect(() => {
     const spaceName = activeSpace?.projectMeta?.name || 'Workspace'
-    document.title = `AuditSpace v1.0.6 - ${spaceName}`
+    const fullTitle = `AuditSpace v1.0.14 - ${spaceName}`
+    document.title = fullTitle
+    const isTauri =
+      typeof window !== 'undefined' &&
+      ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
+    if (isTauri) {
+      import('@tauri-apps/api/window')
+        .then(({ getCurrentWindow }) => {
+          getCurrentWindow().setTitle(fullTitle).catch(() => {})
+        })
+        .catch(() => {})
+    }
   }, [activeSpace?.projectMeta?.name])
 
   // Helper to update active space
   const updateActiveSpace = (updater: (prev: AuditWorkspace) => AuditWorkspace) => {
+    // If peer is unexpectedly disconnected on a remote P2P space, allow offline drafting
+    const isDisconnectedRemote =
+      collabState.wasUnexpectedDisconnect &&
+      activeSpace?.projectMeta?.id.startsWith('p2p-session-')
+
+    if (isDisconnectedRemote) {
+      setOfflineDraftCount((c) => c + 1)
+    }
+
+    const gmt7 = getGmt7Time()
+
     setMultiStore((prev) => {
       const updatedSpaces = prev.spaces.map((s) => {
         if (s.projectMeta.id === prev.activeSpaceId) {
           const updated = updater(s)
+
+          // In offline draft mode, mark cards with GMT+7 timestamps and draft flag
+          if (isDisconnectedRemote) {
+            return {
+              ...updated,
+              meetings: updated.meetings.map((m) => ({
+                ...m,
+                updatedAt: m.updatedAt || gmt7.timestamp,
+                updatedAtGmt7: m.updatedAtGmt7 || gmt7.isoString,
+                _isOfflineDraft: true,
+              })),
+              materials: updated.materials.map((m) => ({
+                ...m,
+                updatedAt: m.updatedAt || gmt7.timestamp,
+                updatedAtGmt7: m.updatedAtGmt7 || gmt7.isoString,
+                _isOfflineDraft: true,
+              })),
+              tasks: updated.tasks.map((t) => ({
+                ...t,
+                updatedAt: t.updatedAt || gmt7.timestamp,
+                updatedAtGmt7: t.updatedAtGmt7 || gmt7.isoString,
+                _isOfflineDraft: true,
+              })),
+              stickies: updated.stickies.map((st) => ({
+                ...st,
+                updatedAt: st.updatedAt || gmt7.timestamp,
+                updatedAtGmt7: st.updatedAtGmt7 || gmt7.isoString,
+                _isOfflineDraft: true,
+              })),
+            }
+          }
+
           // Broadcast to connected P2P peers if in read-write session
           p2pSync.broadcastWorkspace(updated)
           return updated
@@ -255,6 +329,99 @@ export function App() {
         spaces: updatedSpaces,
       }
     })
+  }
+
+  // P2P DISCONNECT ACTIONS: Save as Local, Reconnect, or Discard
+  const handleSaveRemoteAsLocal = () => {
+    const sourceWs = disconnectedWorkspaceSnapshot || activeSpace
+    const newSpaceId = `proj-salinan-${Date.now()}`
+    const cleanName =
+      sourceWs.projectMeta.name.replace(/\s*\(P2P\)\s*/g, '').trim() + ' (Salinan Mandiri)'
+
+    const clonedWs: AuditWorkspace = {
+      ...sourceWs,
+      projectMeta: {
+        ...sourceWs.projectMeta,
+        id: newSpaceId,
+        name: cleanName,
+      },
+    }
+
+    setMultiStore((prevStore) => {
+      const filtered = prevStore.spaces.filter(
+        (s) => !s.projectMeta.id.startsWith('p2p-session-')
+      )
+      return {
+        spaces: [clonedWs, ...filtered],
+        activeSpaceId: newSpaceId,
+      }
+    })
+
+    p2pSync.disconnect()
+    p2pSync.clearDisconnectAlert()
+    setIsDisconnectPromptOpen(false)
+    setDisconnectedWorkspaceSnapshot(null)
+    setToastMessage('Ruang berhasil disimpan sebagai Space Lokal Mandiri Anda!')
+    setTimeout(() => setToastMessage(null), 4000)
+  }
+
+  const handleReconnect = async () => {
+    const roomId = collabState.lastRoomId || collabState.roomId
+    if (!roomId) return
+    setIsReconnecting(true)
+    try {
+      const savedName = localStorage.getItem('auditspace_collab_name') || undefined
+      const draftToSend = offlineDraftCount > 0 ? activeSpace : undefined
+      await p2pSync.joinRoom(roomId, savedName, draftToSend)
+      setIsDisconnectPromptOpen(false)
+      p2pSync.clearDisconnectAlert()
+      setToastMessage(
+        draftToSend
+          ? `Tersambung kembali ke ruang ${roomId}! Mengirim draft offline (${offlineDraftCount} perubahan) ke Host...`
+          : `Berhasil tersambung kembali ke ruang ${roomId}!`
+      )
+      setTimeout(() => setToastMessage(null), 4000)
+    } catch (err: any) {
+      console.error('Reconnect failed:', err)
+      setToastMessage(`Gagal menyambung ulang: ${err?.message || err}`)
+      setTimeout(() => setToastMessage(null), 4000)
+    } finally {
+      setIsReconnecting(false)
+    }
+  }
+
+  const handleDiscardAndLeave = () => {
+    setMultiStore((prevStore) => {
+      const cleaned = prevStore.spaces.filter(
+        (s) => !s.projectMeta.id.startsWith('p2p-session-')
+      )
+      const fallback =
+        cleaned.find((s) => !s.projectMeta.id.startsWith('p2p-session-')) || cleaned[0]
+      return {
+        spaces: cleaned.length > 0 ? cleaned : prevStore.spaces,
+        activeSpaceId: fallback ? fallback.projectMeta.id : prevStore.activeSpaceId,
+      }
+    })
+
+    p2pSync.disconnect()
+    p2pSync.clearDisconnectAlert()
+    setIsDisconnectPromptOpen(false)
+    setDisconnectedWorkspaceSnapshot(null)
+    setToastMessage('Telah keluar dari sesi dan kembali ke Space Lokal Anda.')
+    setTimeout(() => setToastMessage(null), 3000)
+  }
+
+  const handlePeerManualLeave = () => {
+    const confirmSave = window.confirm(
+      'Apakah Anda ingin menyimpan salinan ruang ini ke space lokal Anda sebelum keluar?\n\n' +
+        '• Klik [OK] untuk Simpan Salinan Mandiri lalu keluar.\n' +
+        '• Klik [Batal] untuk langsung keluar tanpa menyimpan salinan.'
+    )
+    if (confirmSave) {
+      handleSaveRemoteAsLocal()
+    } else {
+      handleDiscardAndLeave()
+    }
   }
 
   // SPACE MANAGEMENT
@@ -322,17 +489,23 @@ export function App() {
 
   // MEETINGS HANDLERS
   const handleSaveMeeting = (meeting: MeetingCard) => {
+    const gmt7 = getGmt7Time()
+    const meetingWithGmt7: MeetingCard = {
+      ...meeting,
+      updatedAt: gmt7.timestamp,
+      updatedAtGmt7: gmt7.isoString,
+    }
     updateActiveSpace((prev) => {
       const exists = prev.meetings.some((m) => m.id === meeting.id)
-      let itemToSave = meeting
+      let itemToSave = meetingWithGmt7
       if (!exists) {
         const nextPos = getNextMeetingPosition(prev.meetings)
-        itemToSave = { ...meeting, x: nextPos.x, y: nextPos.y }
+        itemToSave = { ...meetingWithGmt7, x: nextPos.x, y: nextPos.y }
       }
       return {
         ...prev,
         meetings: exists
-          ? prev.meetings.map((m) => (m.id === meeting.id ? meeting : m))
+          ? prev.meetings.map((m) => (m.id === meeting.id ? itemToSave : m))
           : [...prev.meetings, itemToSave],
       }
     })
@@ -348,17 +521,23 @@ export function App() {
 
   // MATERIALS HANDLERS
   const handleSaveMaterial = (mat: MaterialVaultCard) => {
+    const gmt7 = getGmt7Time()
+    const matWithGmt7: MaterialVaultCard = {
+      ...mat,
+      updatedAt: gmt7.timestamp,
+      updatedAtGmt7: gmt7.isoString,
+    }
     updateActiveSpace((prev) => {
       const exists = prev.materials.some((m) => m.id === mat.id)
-      let itemToSave = mat
+      let itemToSave = matWithGmt7
       if (!exists) {
         const nextPos = getNextMaterialPosition(prev.materials)
-        itemToSave = { ...mat, x: nextPos.x, y: nextPos.y }
+        itemToSave = { ...matWithGmt7, x: nextPos.x, y: nextPos.y }
       }
       return {
         ...prev,
         materials: exists
-          ? prev.materials.map((m) => (m.id === mat.id ? mat : m))
+          ? prev.materials.map((m) => (m.id === mat.id ? itemToSave : m))
           : [...prev.materials, itemToSave],
       }
     })
@@ -486,15 +665,21 @@ export function App() {
 
   // TASKS HANDLERS
   const handleSaveTask = (task: TaskCard) => {
+    const gmt7 = getGmt7Time()
+    const taskWithGmt7: TaskCard = {
+      ...task,
+      updatedAt: gmt7.timestamp,
+      updatedAtGmt7: gmt7.isoString,
+    }
     updateActiveSpace((prev) => {
       const existing = prev.tasks.find((t) => t.id === task.id)
-      let itemToSave = task
+      let itemToSave = taskWithGmt7
       if (!existing) {
         const nextPos = getNextTaskPosition(prev.tasks, task.status)
-        itemToSave = { ...task, x: nextPos.x, y: nextPos.y }
+        itemToSave = { ...taskWithGmt7, x: nextPos.x, y: nextPos.y }
       } else if (existing.status !== task.status) {
         const nextPos = getNextTaskPosition(prev.tasks, task.status)
-        itemToSave = { ...task, x: nextPos.x, y: nextPos.y }
+        itemToSave = { ...taskWithGmt7, x: nextPos.x, y: nextPos.y }
       }
       return {
         ...prev,
@@ -514,23 +699,38 @@ export function App() {
   }
 
   const handleToggleTaskDone = (task: TaskCard) => {
-    setEditingTask(task)
-    setIsTaskOpen(true)
+    const gmt7 = getGmt7Time()
+    const nextStatus: TaskStatus = task.status === 'done' ? 'todo' : 'done'
+    const updated: TaskCard = {
+      ...task,
+      status: nextStatus,
+      completedAt: nextStatus === 'done' ? gmt7.isoString : undefined,
+      completedBy: nextStatus === 'done' ? (task.pic || 'Auditor') : undefined,
+      updatedAt: gmt7.timestamp,
+      updatedAtGmt7: gmt7.isoString,
+    }
+    handleSaveTask(updated)
   }
 
   // STICKIES HANDLERS
   const handleSaveSticky = (sticky: StickyNote) => {
+    const gmt7 = getGmt7Time()
+    const stickyWithGmt7: StickyNote = {
+      ...sticky,
+      updatedAt: gmt7.timestamp,
+      updatedAtGmt7: gmt7.isoString,
+    }
     updateActiveSpace((prev) => {
       const exists = prev.stickies.some((s) => s.id === sticky.id)
-      let itemToSave = sticky
+      let itemToSave = stickyWithGmt7
       if (!exists) {
         const nextPos = getNextStickyPosition(prev.stickies)
-        itemToSave = { ...sticky, x: nextPos.x, y: nextPos.y }
+        itemToSave = { ...stickyWithGmt7, x: nextPos.x, y: nextPos.y }
       }
       return {
         ...prev,
         stickies: exists
-          ? prev.stickies.map((s) => (s.id === sticky.id ? sticky : s))
+          ? prev.stickies.map((s) => (s.id === sticky.id ? itemToSave : s))
           : [...prev.stickies, itemToSave],
       }
     })
@@ -549,6 +749,7 @@ export function App() {
 
   // TASK STATUS TRANSITIONS (To-Do <-> In-Progress)
   const handleUpdateTaskStatus = (taskId: string, status: TaskStatus) => {
+    const gmt7 = getGmt7Time()
     updateActiveSpace((prev) => ({
       ...prev,
       tasks: prev.tasks.map((t) => {
@@ -556,8 +757,10 @@ export function App() {
         return {
           ...t,
           status,
-          completedAt: status === 'done' ? (t.completedAt || new Date().toISOString()) : undefined,
+          completedAt: status === 'done' ? (t.completedAt || gmt7.isoString) : undefined,
           completedBy: status === 'done' ? (t.completedBy || t.pic || 'Auditor') : undefined,
+          updatedAt: gmt7.timestamp,
+          updatedAtGmt7: gmt7.isoString,
         }
       }),
     }))
@@ -677,10 +880,10 @@ export function App() {
           activeSpaceId: imported.projectMeta.id,
           spaces: [...prev.spaces, imported],
         }))
-        alert(`Berhasil mengimpor space audit: "${imported.projectMeta.name}"!`)
+        alert(`Berhasil memulihkan (restore) space audit: "${imported.projectMeta.name}"!`)
       }
     } catch (err) {
-      alert('Gagal mengimpor .auditpkg: ' + err)
+      alert('Gagal memulihkan cadangan .auditpkg: ' + err)
     }
   }
 
@@ -724,6 +927,56 @@ export function App() {
         onToggleDarkMode={handleToggleDarkMode}
       />
 
+      {/* Disconnected Peer Offline Draft Mode Banner */}
+      {collabState.wasUnexpectedDisconnect && activeSpace.projectMeta.id.startsWith('p2p-session-') && (
+        <div className="bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-orange-500/20 border-b border-amber-500/40 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-950 dark:text-amber-100 shadow-xs animate-in fade-in">
+          <div className="flex items-center gap-2.5 font-medium flex-wrap">
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-white font-black text-[10px] tracking-wide uppercase shadow-xs flex items-center gap-1.5 animate-pulse">
+              ✏️ MODE OFFLINE (DRAFT)
+            </span>
+            <span>
+              Koneksi ke Host terputus. Anda tetap dapat mencatat & mengedit (Waktu GMT+7 WIB).
+            </span>
+            {offlineDraftCount > 0 && (
+              <span className="px-2 py-0.5 rounded-md bg-amber-200 dark:bg-amber-900/60 font-bold text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                {offlineDraftCount} perubahan draft lokal tersimpan
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleReconnect}
+              disabled={isReconnecting}
+              className="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition flex items-center gap-1.5 disabled:opacity-50"
+            >
+              {isReconnecting ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  Menghubungkan...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Sambung Ulang & Re-sync
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setIsDisconnectPromptOpen(true)}
+              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 transition"
+            >
+              Opsi Simpan
+            </button>
+            <button
+              onClick={handleDiscardAndLeave}
+              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 text-zinc-800 dark:text-zinc-200 transition"
+            >
+              Kembali ke Space Saya
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Peer Collaboration Banner with Disconnect & Return to Local Space */}
       {collabState.isConnected && collabState.role === 'peer' && (
         <div
@@ -744,9 +997,23 @@ export function App() {
             <span>
               Anda sedang berada di ruang rekan: <strong>{activeSpace.projectMeta.name}</strong> ({collabState.roomId}).
             </span>
+            {collabState.participants && collabState.participants.length > 0 && (
+              <div className="flex items-center -space-x-1.5 ml-2">
+                {collabState.participants.map((p) => (
+                  <span
+                    key={p.id}
+                    title={`${p.name} (${p.role === 'host' ? 'Host Ruang' : 'Rekan Editor'}${p.isYou ? ' - Anda' : ''})`}
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-extrabold text-white uppercase ring-2 ring-white dark:ring-zinc-900 shadow-xs cursor-default"
+                    style={{ backgroundColor: p.color }}
+                  >
+                    {p.name.substring(0, 2)}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <button
-            onClick={() => p2pSync.disconnect()}
+            onClick={handlePeerManualLeave}
             className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-800 border shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5"
             title="Keluar dari sesi ruang rekan dan kembali ke ruang kerja audit lokal Anda"
           >
@@ -765,6 +1032,20 @@ export function App() {
             <span>
               Kode Ruang: <strong>{collabState.roomId}</strong> • {collabState.connectedPeersCount} rekan terhubung
             </span>
+            {collabState.participants && collabState.participants.length > 0 && (
+              <div className="flex items-center -space-x-1.5 ml-2">
+                {collabState.participants.map((p) => (
+                  <span
+                    key={p.id}
+                    title={`${p.name} (${p.role === 'host' ? 'Host (Anda)' : 'Rekan Editor'})`}
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-extrabold text-white uppercase ring-2 ring-white dark:ring-zinc-900 shadow-xs cursor-default"
+                    style={{ backgroundColor: p.color }}
+                  >
+                    {p.name.substring(0, 2)}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <button
             onClick={() => p2pSync.disconnect()}
@@ -935,6 +1216,21 @@ export function App() {
         onClose={() => setIsShareModalOpen(false)}
         workspace={activeSpace}
         onExportHtmlReport={() => exportInteractiveHtmlReport(activeSpace)}
+      />
+
+      <DisconnectPromptModal
+        isOpen={isDisconnectPromptOpen}
+        roomCode={collabState.lastRoomId || collabState.roomId || ''}
+        workspaceName={
+          disconnectedWorkspaceSnapshot?.projectMeta?.name || activeSpace.projectMeta.name
+        }
+        reason={collabState.disconnectReason}
+        isReconnecting={isReconnecting}
+        offlineDraftCount={offlineDraftCount}
+        onContinueDraft={() => setIsDisconnectPromptOpen(false)}
+        onSaveAsLocal={handleSaveRemoteAsLocal}
+        onReconnect={handleReconnect}
+        onDiscardAndLeave={handleDiscardAndLeave}
       />
 
       <ResetConfirmModal

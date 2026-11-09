@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
               AuditSpace
             </span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium">
-              v1.0.13
+              v1.0.14
             </span>
           </div>
         </div>
@@ -505,17 +505,17 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* Export .auditpkg */}
+        {/* Backup .auditpkg */}
         <button
           onClick={onExport}
           className="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
-          title="Export Space ini + Berkas PDF ke Bundle .auditpkg"
+          title="Backup / Cadangkan Space ini + Berkas PDF ke Bundle .auditpkg"
         >
           <FileUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          <span className="hidden 2xl:inline">Export</span>
+          <span className="hidden 2xl:inline">Backup</span>
         </button>
 
-        {/* Import .auditpkg */}
+        {/* Restore .auditpkg */}
         <input
           type="file"
           ref={fileInputRef}
@@ -526,10 +526,10 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={() => fileInputRef.current?.click()}
           className="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 text-xs font-medium rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
-          title="Buka / Import file .auditpkg yang tersimpan di disk atau cloud drive"
+          title="Restore / Pulihkan file cadangan .auditpkg yang tersimpan"
         >
           <FileDown className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span className="hidden 2xl:inline">Import</span>
+          <span className="hidden 2xl:inline">Restore</span>
         </button>
 
         {/* Cek Update */}

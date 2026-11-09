@@ -25,6 +25,9 @@ export interface MeetingCard {
   actionPoints: string[]
   x: number
   y: number
+  updatedAt?: number
+  updatedAtGmt7?: string
+  _isOfflineDraft?: boolean
 }
 
 export interface MaterialVaultCard {
@@ -35,6 +38,9 @@ export interface MaterialVaultCard {
   links: ExternalLink[]
   x: number
   y: number
+  updatedAt?: number
+  updatedAtGmt7?: string
+  _isOfflineDraft?: boolean
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
@@ -54,6 +60,9 @@ export interface TaskCard {
   evidenceAttachment?: Attachment | null
   x: number
   y: number
+  updatedAt?: number
+  updatedAtGmt7?: string
+  _isOfflineDraft?: boolean
 }
 
 export interface StickyNote {
@@ -62,6 +71,9 @@ export interface StickyNote {
   color: 'amber' | 'blue' | 'emerald' | 'purple' | 'rose'
   x: number
   y: number
+  updatedAt?: number
+  updatedAtGmt7?: string
+  _isOfflineDraft?: boolean
 }
 
 export interface ConnectionLink {
