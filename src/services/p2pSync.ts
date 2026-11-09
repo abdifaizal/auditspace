@@ -184,12 +184,27 @@ class P2PSyncService {
       this.participantsMap.set('host', this.myProfile)
       this.currentHostWorkspace = initialWorkspace
 
+      let isSettled = false
+      let hostTimeout: any = setTimeout(() => {
+        if (!isSettled) {
+          isSettled = true
+          this.disconnect()
+          const errMsg = 'Waktu pembuatan ruang habis (Timeout). Pastikan koneksi internet aktif.'
+          this.updateState({ error: errMsg, isConnected: false })
+          reject(new Error(errMsg))
+        }
+      }, 10000)
+
       try {
         this.peer = new Peer(peerId, {
           debug: 1,
         })
 
         this.peer.on('open', (id) => {
+          if (isSettled) return
+          isSettled = true
+          clearTimeout(hostTimeout)
+
           const roomCode = id.replace('auditspace-room-', '')
           this.updateState({
             isConnected: true,
@@ -212,16 +227,26 @@ class P2PSyncService {
         })
 
         this.peer.on('error', (err) => {
+          if (isSettled) return
+          isSettled = true
+          clearTimeout(hostTimeout)
+
           const errStr =
             (err as any)?.type === 'unavailable-id'
               ? 'Kode ruang ini sedang aktif dipakai. Silakan gunakan kode lain atau buat kode acak.'
               : err.message || 'Koneksi P2P error.'
-          this.updateState({ error: errStr })
+          this.disconnect()
+          this.updateState({ error: errStr, isConnected: false })
           reject(new Error(errStr))
         })
       } catch (err: any) {
-        this.updateState({ error: err.message })
-        reject(err)
+        if (!isSettled) {
+          isSettled = true
+          clearTimeout(hostTimeout)
+          this.disconnect()
+          this.updateState({ error: err.message, isConnected: false })
+          reject(err)
+        }
       }
     })
   }
@@ -350,13 +375,35 @@ class P2PSyncService {
       const resolvedName = peerName?.trim() || 'Rekan Auditor'
       const assignedColor = getAvatarColor(resolvedName + Date.now())
 
+      let isSettled = false
+      let connTimeout: any = null
+
+      const cleanupAndReject = (errMsg: string) => {
+        if (isSettled) return
+        isSettled = true
+        if (connTimeout) {
+          clearTimeout(connTimeout)
+          connTimeout = null
+        }
+        this.disconnect()
+        this.updateState({ error: errMsg, isConnected: false })
+        reject(new Error(errMsg))
+      }
+
+      // 10-second timeout to connect to host
+      connTimeout = setTimeout(() => {
+        cleanupAndReject(
+          `Waktu penyambungan habis (Timeout). Ruang AUDIT-${cleanCode} tidak merespons atau Host sedang offline.`
+        )
+      }, 10000)
+
       try {
         this.peer = new Peer({
           debug: 1,
         })
 
         this.peer.on('open', (myPeerId) => {
-          if (!this.peer) return
+          if (!this.peer || isSettled) return
 
           this.myProfile = {
             id: myPeerId,
@@ -371,6 +418,18 @@ class P2PSyncService {
           })
 
           conn.on('open', () => {
+            if (isSettled) {
+              try {
+                conn.close()
+              } catch (e) {}
+              return
+            }
+            isSettled = true
+            if (connTimeout) {
+              clearTimeout(connTimeout)
+              connTimeout = null
+            }
+
             this.connections.set(conn.peer, conn)
             this.updateState({
               isConnected: true,
@@ -430,28 +489,39 @@ class P2PSyncService {
           })
 
           const handleConnClose = () => {
-            this.handleHostDisconnected('Koneksi dengan Host terputus (Host keluar atau offline).')
+            if (!isSettled) {
+              cleanupAndReject('Koneksi ke host terputus sebelum sempat tersambung.')
+            } else {
+              this.handleHostDisconnected('Koneksi dengan Host terputus (Host keluar atau offline).')
+            }
           }
 
           conn.on('close', handleConnClose)
 
-          conn.on('error', (err) => {
-            const errStr =
-              'Gagal terhubung ke host. Pastikan kode ruang benar dan host masih aktif.'
-            this.updateState({ error: errStr })
-            reject(new Error(errStr))
+          conn.on('error', (err: any) => {
+            cleanupAndReject(
+              err?.message || 'Gagal terhubung ke host. Pastikan kode ruang benar dan host masih aktif.'
+            )
           })
         })
 
-        this.peer.on('error', (err) => {
-          const errStr =
-            'Tidak dapat menghubungi server sinyal P2P. Pastikan koneksi internet aktif.'
-          this.updateState({ error: errStr })
-          reject(new Error(errStr))
+        this.peer.on('error', (err: any) => {
+          const errType = err?.type
+          let errStr = err?.message || 'Tidak dapat menghubungi server sinyal P2P.'
+          if (errType === 'peer-unavailable') {
+            errStr = `Ruang AUDIT-${cleanCode} tidak ditemukan atau Host sedang offline. Pastikan Host sudah membuka sesi berbagi.`
+          } else if (
+            errType === 'network' ||
+            errType === 'server-error' ||
+            errType === 'socket-error' ||
+            errType === 'socket-closed'
+          ) {
+            errStr = 'Gagal terhubung ke server koordinasi sinyal P2P. Pastikan koneksi internet aktif.'
+          }
+          cleanupAndReject(errStr)
         })
       } catch (err: any) {
-        this.updateState({ error: err.message })
-        reject(err)
+        cleanupAndReject(err?.message || 'Gagal menginisialisasi modul P2P.')
       }
     })
   }

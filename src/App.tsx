@@ -47,6 +47,7 @@ import { UpdateModal } from './components/UpdateModal'
 import { ResetConfirmModal } from './components/ResetConfirmModal'
 import { ShareModal } from './components/ShareModal'
 import { DisconnectPromptModal } from './components/DisconnectPromptModal'
+import { LeaveSpaceConfirmModal } from './components/LeaveSpaceConfirmModal'
 import { exportInteractiveHtmlReport } from './services/htmlReportExporter'
 import { p2pSync, CollabState } from './services/p2pSync'
 import { getGmt7Time } from './services/smartMerge'
@@ -102,6 +103,7 @@ export function App() {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [isDisconnectPromptOpen, setIsDisconnectPromptOpen] = useState(false)
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false)
   const [isReconnecting, setIsReconnecting] = useState(false)
   const [offlineDraftCount, setOfflineDraftCount] = useState<number>(0)
   const [disconnectedWorkspaceSnapshot, setDisconnectedWorkspaceSnapshot] = useState<AuditWorkspace | null>(null)
@@ -214,11 +216,11 @@ export function App() {
     if (isTauri) {
       import('@tauri-apps/api/window')
         .then(({ getCurrentWindow }) => {
-          getCurrentWindow().setTitle('AuditSpace v1.0.14').catch(() => {})
+          getCurrentWindow().setTitle('AuditSpace v1.0.15').catch(() => {})
         })
         .catch(() => {})
     }
-    document.title = 'AuditSpace v1.0.14'
+    document.title = 'AuditSpace v1.0.15'
   }, [])
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
@@ -255,7 +257,7 @@ export function App() {
   // Synchronize document.title to display app version on the native title bar
   useEffect(() => {
     const spaceName = activeSpace?.projectMeta?.name || 'Workspace'
-    const fullTitle = `AuditSpace v1.0.14 - ${spaceName}`
+    const fullTitle = `AuditSpace v1.0.15 - ${spaceName}`
     document.title = fullTitle
     const isTauri =
       typeof window !== 'undefined' &&
@@ -360,6 +362,7 @@ export function App() {
     p2pSync.disconnect()
     p2pSync.clearDisconnectAlert()
     setIsDisconnectPromptOpen(false)
+    setIsLeaveConfirmOpen(false)
     setDisconnectedWorkspaceSnapshot(null)
     setToastMessage('Ruang berhasil disimpan sebagai Space Lokal Mandiri Anda!')
     setTimeout(() => setToastMessage(null), 4000)
@@ -406,22 +409,14 @@ export function App() {
     p2pSync.disconnect()
     p2pSync.clearDisconnectAlert()
     setIsDisconnectPromptOpen(false)
+    setIsLeaveConfirmOpen(false)
     setDisconnectedWorkspaceSnapshot(null)
     setToastMessage('Telah keluar dari sesi dan kembali ke Space Lokal Anda.')
     setTimeout(() => setToastMessage(null), 3000)
   }
 
   const handlePeerManualLeave = () => {
-    const confirmSave = window.confirm(
-      'Apakah Anda ingin menyimpan salinan ruang ini ke space lokal Anda sebelum keluar?\n\n' +
-        '• Klik [OK] untuk Simpan Salinan Mandiri lalu keluar.\n' +
-        '• Klik [Batal] untuk langsung keluar tanpa menyimpan salinan.'
-    )
-    if (confirmSave) {
-      handleSaveRemoteAsLocal()
-    } else {
-      handleDiscardAndLeave()
-    }
+    setIsLeaveConfirmOpen(true)
   }
 
   // SPACE MANAGEMENT
@@ -968,7 +963,7 @@ export function App() {
               Opsi Simpan
             </button>
             <button
-              onClick={handleDiscardAndLeave}
+              onClick={handlePeerManualLeave}
               className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 text-zinc-800 dark:text-zinc-200 transition"
             >
               Kembali ke Space Saya
@@ -1216,6 +1211,18 @@ export function App() {
         onClose={() => setIsShareModalOpen(false)}
         workspace={activeSpace}
         onExportHtmlReport={() => exportInteractiveHtmlReport(activeSpace)}
+        onPeerLeave={handlePeerManualLeave}
+      />
+
+      <LeaveSpaceConfirmModal
+        isOpen={isLeaveConfirmOpen}
+        workspaceName={
+          disconnectedWorkspaceSnapshot?.projectMeta?.name || activeSpace.projectMeta.name
+        }
+        offlineDraftCount={offlineDraftCount}
+        onClose={() => setIsLeaveConfirmOpen(false)}
+        onSaveAsLocalAndLeave={handleSaveRemoteAsLocal}
+        onDiscardAndLeave={handleDiscardAndLeave}
       />
 
       <DisconnectPromptModal

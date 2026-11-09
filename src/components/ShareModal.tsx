@@ -22,6 +22,7 @@ interface ShareModalProps {
   onClose: () => void
   workspace: AuditWorkspace
   onExportHtmlReport: () => void
+  onPeerLeave?: () => void
 }
 
 export const ShareModal: React.FC<ShareModalProps> = ({
@@ -29,11 +30,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   onClose,
   workspace,
   onExportHtmlReport,
+  onPeerLeave,
 }) => {
   const [activeTab, setActiveTab] = useState<'host' | 'join'>('host')
   const [accessMode, setAccessMode] = useState<AccessMode>('read-only')
   const [customCodeInput, setCustomCodeInput] = useState('')
   const [joinCodeInput, setJoinCodeInput] = useState('')
+  const [connectionError, setConnectionError] = useState<string | null>(null)
   const [userName, setUserName] = useState(() => {
     return (
       localStorage.getItem('auditspace_collab_name') ||
@@ -51,6 +54,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       setCollabState(st)
       if (st.isConnected) {
         setIsConnecting(false)
+        setConnectionError(null)
+      }
+      if (st.error) {
+        setConnectionError(st.error)
       }
     })
     return () => unsub()
@@ -58,9 +65,34 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
   if (!isOpen) return null
 
+  const handleCloseModal = () => {
+    if (isConnecting) {
+      p2pSync.disconnect()
+      setIsConnecting(false)
+    }
+    setConnectionError(null)
+    onClose()
+  }
+
+  const handleTabChange = (tab: 'host' | 'join') => {
+    if (isConnecting) {
+      p2pSync.disconnect()
+      setIsConnecting(false)
+    }
+    setConnectionError(null)
+    setActiveTab(tab)
+  }
+
+  const handleCancelConnecting = () => {
+    p2pSync.disconnect()
+    setIsConnecting(false)
+    setConnectionError('Penyambungan dibatalkan.')
+  }
+
   const handleStartHosting = async () => {
     const trimmedName = userName.trim() || 'Auditor (Host)'
     localStorage.setItem('auditspace_collab_name', trimmedName)
+    setConnectionError(null)
     setIsConnecting(true)
     try {
       await p2pSync.startHosting(
@@ -69,8 +101,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         customCodeInput.trim() || undefined,
         trimmedName
       )
-    } catch (err) {
+      setConnectionError(null)
+    } catch (err: any) {
       console.error('Failed to start hosting:', err)
+      setConnectionError(err?.message || 'Gagal memulai sesi hosting.')
     } finally {
       setIsConnecting(false)
     }
@@ -83,11 +117,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     }
     const trimmedName = userName.trim() || 'Rekan Auditor'
     localStorage.setItem('auditspace_collab_name', trimmedName)
+    setConnectionError(null)
     setIsConnecting(true)
     try {
       await p2pSync.joinRoom(joinCodeInput.trim(), trimmedName)
-    } catch (err) {
+      setConnectionError(null)
+    } catch (err: any) {
       console.error('Failed to join room:', err)
+      setConnectionError(err?.message || 'Gagal menyambung ke ruang rekan.')
     } finally {
       setIsConnecting(false)
     }
@@ -124,7 +161,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleCloseModal}
             className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
           >
             <X className="w-5 h-5" />
@@ -147,7 +184,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   </span>
                 </div>
                 <button
-                  onClick={handleDisconnect}
+                  onClick={() => {
+                    if (collabState.role === 'peer' && onPeerLeave) {
+                      onClose()
+                      onPeerLeave()
+                    } else {
+                      handleDisconnect()
+                    }
+                  }}
                   className="px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-100/60 dark:hover:bg-red-950/40 rounded-lg transition flex items-center gap-1 border border-red-200 dark:border-red-900/40"
                 >
                   <PowerOff className="w-3 h-3" />
@@ -246,7 +290,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
               <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl">
                 <button
-                  onClick={() => setActiveTab('host')}
+                  onClick={() => handleTabChange('host')}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
                     activeTab === 'host'
                       ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm'
@@ -256,7 +300,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   Buka Sesi Berbagi (Host)
                 </button>
                 <button
-                  onClick={() => setActiveTab('join')}
+                  onClick={() => handleTabChange('join')}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
                     activeTab === 'join'
                       ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm'
@@ -343,7 +387,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     <input
                       type="text"
                       value={joinCodeInput}
-                      onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        setJoinCodeInput(e.target.value.toUpperCase())
+                        setConnectionError(null)
+                      }}
                       placeholder="Contoh: AUDIT-7842AB"
                       className="w-full px-3 py-2 text-sm font-mono tracking-wider bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100"
                     />
@@ -352,23 +399,44 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     </p>
                   </div>
 
-                  <button
-                    onClick={handleJoinRoom}
-                    disabled={isConnecting || !joinCodeInput.trim()}
-                    className="w-full py-2.5 px-4 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {isConnecting ? (
-                      <>
+                  {/* Immediate Connection Error Alert */}
+                  {connectionError && (
+                    <div className="p-3 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/80 dark:bg-red-950/30 text-red-800 dark:text-red-300 flex items-start gap-2 animate-in fade-in">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+                      <div className="flex-1">
+                        <p className="font-bold text-xs">Gagal Menyambung ke Ruang</p>
+                        <p className="text-[11px] leading-relaxed mt-0.5 opacity-90">{connectionError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {isConnecting ? (
+                    <div className="space-y-2">
+                      <button
+                        disabled
+                        className="w-full py-2.5 px-4 text-xs font-semibold rounded-xl bg-emerald-600/70 text-white shadow-md flex items-center justify-center gap-2 cursor-wait"
+                      >
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Menyambungkan ke Laptop Rekan...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Link className="w-4 h-4" />
-                        <span>Sambungkan ke Ruang Rekan</span>
-                      </>
-                    )}
-                  </button>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelConnecting}
+                        className="w-full py-1.5 px-3 text-xs font-semibold rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition text-center"
+                      >
+                        Batalkan Penyambungan
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleJoinRoom}
+                      disabled={!joinCodeInput.trim()}
+                      className="w-full py-2.5 px-4 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Link className="w-4 h-4" />
+                      <span>Sambungkan ke Ruang Rekan</span>
+                    </button>
+                  )}
                 </div>
               )}
             </>
@@ -403,7 +471,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         {/* Footer */}
         <div className="px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-end bg-zinc-50/50 dark:bg-zinc-900/50">
           <button
-            onClick={onClose}
+            onClick={handleCloseModal}
             className="px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl"
           >
             Tutup
