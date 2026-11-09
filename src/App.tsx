@@ -216,11 +216,11 @@ export function App() {
     if (isTauri) {
       import('@tauri-apps/api/window')
         .then(({ getCurrentWindow }) => {
-          getCurrentWindow().setTitle('AuditSpace v1.0.15').catch(() => {})
+          getCurrentWindow().setTitle('AuditSpace v1.0.16').catch(() => {})
         })
         .catch(() => {})
     }
-    document.title = 'AuditSpace v1.0.15'
+    document.title = 'AuditSpace v1.0.16'
   }, [])
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
@@ -257,7 +257,7 @@ export function App() {
   // Synchronize document.title to display app version on the native title bar
   useEffect(() => {
     const spaceName = activeSpace?.projectMeta?.name || 'Workspace'
-    const fullTitle = `AuditSpace v1.0.15 - ${spaceName}`
+    const fullTitle = `AuditSpace v1.0.16 - ${spaceName}`
     document.title = fullTitle
     const isTauri =
       typeof window !== 'undefined' &&

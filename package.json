@@ -1,7 +1,7 @@
 {
   "name": "auditspace",
   "private": true,
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Productivity workspace for audit engagements",
   "type": "module",
   "scripts": {

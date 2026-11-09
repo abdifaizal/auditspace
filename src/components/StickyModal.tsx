@@ -166,6 +166,7 @@ export const StickyModal: React.FC<StickyModalProps> = ({
             </h3>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
           >
@@ -173,8 +174,10 @@ export const StickyModal: React.FC<StickyModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 flex flex-col">
-          {/* Warna Catatan */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
+          {/* Scrollable Form Body */}
+          <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
+            {/* Warna Catatan */}
           <div className="shrink-0">
             <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
               Warna Catatan
@@ -319,9 +322,10 @@ export const StickyModal: React.FC<StickyModalProps> = ({
               </div>
             )}
           </div>
+          </div>
 
-          {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
+          {/* Pinned Sticky Footer Actions */}
+          <div className="flex items-center justify-between px-6 py-3.5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/95 shrink-0 shadow-xs z-10">
             {sticky && onDelete ? (
               <button
                 type="button"

@@ -219,28 +219,30 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden my-8">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
-          <div>
-            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-              {meeting ? 'Edit Agenda & Diskusi Auditee' : 'Tambah Agenda & Diskusi Baru'}
-            </h2>
-            <p className="text-xs text-zinc-500">
-              Lampirkan surat/PDF undangan dan catat rangkuman hasil wawancara audit.
-            </p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full max-h-[90vh] overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 shrink-0">
+            <div>
+              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                {meeting ? 'Edit Agenda & Diskusi Auditee' : 'Tambah Agenda & Diskusi Baru'}
+              </h2>
+              <p className="text-xs text-zinc-500">
+                Lampirkan surat/PDF undangan dan catat rangkuman hasil wawancara audit.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Form Scrollable Body */}
+          <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
           {/* Title */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
@@ -472,9 +474,10 @@ export const MeetingModal: React.FC<MeetingModalProps> = ({
               </button>
             </div>
           </div>
+          </div>
 
-          {/* Footer Buttons */}
-          <div className="flex items-center justify-between pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          {/* Pinned Sticky Footer Buttons */}
+          <div className="flex items-center justify-between px-6 py-3.5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/95 shrink-0 shadow-xs z-10">
             {meeting && onDelete ? (
               <button
                 type="button"
