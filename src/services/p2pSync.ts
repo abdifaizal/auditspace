@@ -60,6 +60,33 @@ const PARTICIPANT_COLORS = [
   '#6366f1', // indigo
 ]
 
+// ICE Servers (STUN + TURN) for reliable WebRTC traversal across different networks & corporate firewalls
+const PEER_CONFIG = {
+  debug: 1,
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun.cloudflare.com:3478' },
+      {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+      {
+        urls: 'turns:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+    ],
+  },
+}
+
 function getAvatarColor(seed: string): string {
   let hash = 0
   for (let i = 0; i < seed.length; i++) {
@@ -193,12 +220,10 @@ class P2PSyncService {
           this.updateState({ error: errMsg, isConnected: false })
           reject(new Error(errMsg))
         }
-      }, 10000)
+      }, 25000)
 
       try {
-        this.peer = new Peer(peerId, {
-          debug: 1,
-        })
+        this.peer = new Peer(peerId, PEER_CONFIG)
 
         this.peer.on('open', (id) => {
           if (isSettled) return
@@ -220,6 +245,20 @@ class P2PSyncService {
 
           this.startHostHeartbeat()
           resolve(roomCode)
+        })
+
+        // Keep Host discoverable on signaling server if idle signaling WebSocket drops
+        this.peer.on('disconnected', () => {
+          if (
+            this.peer &&
+            !this.peer.destroyed &&
+            this.currentState.isConnected &&
+            this.currentState.role === 'host'
+          ) {
+            try {
+              this.peer.reconnect()
+            } catch (e) {}
+          }
         })
 
         this.peer.on('connection', (conn) => {
@@ -270,7 +309,7 @@ class P2PSyncService {
 
       const initMsg: CollabMessage = {
         type: 'INIT_SYNC',
-        workspace: initialWorkspace,
+        workspace: this.currentHostWorkspace || initialWorkspace,
         accessMode,
         participants: currentParticipants,
       }
@@ -369,7 +408,11 @@ class P2PSyncService {
     return new Promise((resolve, reject) => {
       this.disconnect()
 
-      const cleanCode = roomCode.toUpperCase().trim().replace(/^AUDIT-/, '')
+      const cleanCode = roomCode
+        .toUpperCase()
+        .replace(/\s+/g, '')
+        .replace(/^AUDIT-?/, '')
+        .replace(/[^A-Z0-9]/g, '')
       const targetPeerId = `auditspace-room-AUDIT-${cleanCode}`
 
       const resolvedName = peerName?.trim() || 'Rekan Auditor'
@@ -390,17 +433,15 @@ class P2PSyncService {
         reject(new Error(errMsg))
       }
 
-      // 10-second timeout to connect to host
+      // 25-second timeout to connect to host (accommodates EU signaling + ICE/TURN relay negotiation)
       connTimeout = setTimeout(() => {
         cleanupAndReject(
           `Waktu penyambungan habis (Timeout). Ruang AUDIT-${cleanCode} tidak merespons atau Host sedang offline.`
         )
-      }, 10000)
+      }, 25000)
 
       try {
-        this.peer = new Peer({
-          debug: 1,
-        })
+        this.peer = new Peer(PEER_CONFIG)
 
         this.peer.on('open', (myPeerId) => {
           if (!this.peer || isSettled) return
@@ -540,7 +581,7 @@ class P2PSyncService {
 
   private resetPeerWatchdog(conn: DataConnection) {
     if (this.watchdogTimeout) clearTimeout(this.watchdogTimeout)
-    // If no message or heartbeat within 9 seconds, host is unreachable (e.g. laptop sleep or network dead)
+    // If no message or heartbeat within 12 seconds, host is unreachable (e.g. laptop sleep or network dead)
     this.watchdogTimeout = setTimeout(() => {
       if (this.currentState.isConnected && this.currentState.role === 'peer') {
         try {
@@ -550,7 +591,7 @@ class P2PSyncService {
           'Deteksi Timeout: Tidak ada respon dari Host (kemungkinan laptop host sleep, ditutup, atau jaringan terputus).'
         )
       }
-    }, 9000)
+    }, 12000)
   }
 
   private handleHostDisconnected(reason: string) {
