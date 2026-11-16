@@ -1,7 +1,7 @@
 {
   "name": "auditspace",
   "private": true,
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Productivity workspace for audit engagements",
   "license": "MIT",
   "homepage": "https://github.com/abdifaizal/auditspace",

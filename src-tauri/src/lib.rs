@@ -126,11 +126,31 @@ fn download_and_install_update(url: String, filename: String) -> Result<(), Stri
       return Err(format!("Gagal mengunduh berkas installer: {}", last_error.trim()));
     }
 
-    // Launch downloaded installer directly in detached mode
-    std::process::Command::new(&dest_str)
-      .creation_flags(DETACHED_PROCESS)
+    // Launch downloaded NSIS installer silently (/S), wait for completion, then auto-relaunch the app
+    let current_exe = std::env::current_exe()
+      .map(|p| p.to_string_lossy().to_string())
+      .unwrap_or_default();
+
+    let escaped_dest = dest_str.replace('\'', "''");
+    let escaped_exe = current_exe.replace('\'', "''");
+
+    let updater_ps = if !escaped_exe.is_empty() {
+      format!(
+        "Start-Sleep -Seconds 1; Start-Process -FilePath '{}' -ArgumentList '/S' -Wait; Start-Process -FilePath '{}'",
+        escaped_dest, escaped_exe
+      )
+    } else {
+      format!(
+        "Start-Sleep -Seconds 1; Start-Process -FilePath '{}' -ArgumentList '/S' -Wait",
+        escaped_dest
+      )
+    };
+
+    std::process::Command::new("powershell")
+      .args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &updater_ps])
+      .creation_flags(DETACHED_PROCESS | CREATE_NO_WINDOW)
       .spawn()
-      .map_err(|e| format!("Gagal menjalankan berkas installer: {}", e))?;
+      .map_err(|e| format!("Gagal menjalankan proses pembaruan otomatis: {}", e))?;
 
     std::process::exit(0);
   }

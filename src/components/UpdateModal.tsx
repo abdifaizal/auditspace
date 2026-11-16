@@ -67,7 +67,7 @@ function formatReleaseNotes(notes: string): string {
 export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null
 
-  const currentVersion = '1.0.17'
+  const currentVersion = '1.0.18'
   const [status, setStatus] = useState<
     'idle' | 'checking' | 'available' | 'not-available' | 'error'
   >('idle')
@@ -357,7 +357,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => 
                     <div className="bg-blue-600 dark:bg-blue-400 h-full w-2/3 animate-pulse rounded-full" />
                   </div>
                   <p className="text-[10px] text-blue-700 dark:text-blue-300 opacity-90">
-                    Setelah selesai, installer akan otomatis berjalan untuk menerapkan pembaruan tanpa perlu membuka browser.
+                    Setelah selesai mengunduh, aplikasi akan menutup sejenak, memperbarui otomatis di latar belakang, lalu terbuka kembali ke versi terbaru.
                   </p>
                 </div>
               )}
