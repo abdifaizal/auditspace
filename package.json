@@ -3,6 +3,12 @@
   "private": true,
   "version": "1.0.17",
   "description": "Productivity workspace for audit engagements",
+  "license": "MIT",
+  "homepage": "https://github.com/abdifaizal/auditspace",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abdifaizal/auditspace.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
