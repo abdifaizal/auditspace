@@ -56,13 +56,15 @@ npm run tauri:build
 
 Pre-built Windows installers (`.exe` / `.msi`) are available free of charge on the [GitHub Releases](https://github.com/abdifaizal/auditspace/releases) page.
 
+Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
 ---
 
 ## 🔐 Code Signing Policy
 
 This project is 100% open source under the MIT License and distributed free of charge.
 - Builds are produced transparently on GitHub-hosted runners via [GitHub Actions](.github/workflows/release.yml).
-- Free code signing is being integrated with [SignPath.io](https://signpath.io/), using a certificate by the SignPath Foundation.
+- Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
 
 ---
 
